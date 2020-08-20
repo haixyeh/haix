@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1A2B猜數字</title>
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="0"> 
+    <link rel="stylesheet" href="./view/css/style.css?v=10">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="header">1A2B猜數字</div>
+    <div class="main">
+        請猜猜四個數字： 「1<span class="green">A</span>2<span class="red">B</span>猜數字」
+        <div class="top-game-rule clearfix">
+            <h3>玩法</h3>
+            <div class="rule-wrap">
+                一個人設定一組四碼的數字作為謎底，另一方猜。每猜一個數，出數者就要根據這個數字給出提示，提示以XAYB形式呈現，直到猜中為止。其中X表示位置正確的數的個數，而Y表示數字正確而位置不對的數的個數。<br />
+                例如，當謎底為8123，而猜謎者猜1052時，出題者必須提示0A2B。<br />
+                例如，當謎底為5637，而猜謎者猜4931時，出題者必須提示1A0B。<br />
+            </div>
+        </div>
+        <div class="content clearfix">
+            <div class="left-wrap">
+                <h3>遊玩紀錄</h3>
+                <div class="info"></div>
+            </div>
+            <div class="right-wrap">
+                <div class="game-box">
+                    <div class="game-box-mask"></div>
+                    <h3>遊戲開始</h3>
+                    <label for="game-input">輸入4組數字</label>
+                    <input id="gameNumber" name="game-input" type="text" maxlength="4">
+                    <input id="postBtn" class="submit-btn" type="button" value="我猜我猜我猜猜猜">
+                    <div id="tip" class="show-txet"></div>
+                </div>
+                <div class="game-switch">
+                    <button id="start">開始</button>
+                    <button id="end">結束</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./view/js/main.js?v=9"></script>
+</body>
+</html>

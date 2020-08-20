@@ -1,0 +1,185 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/* 共用 */
+.clearfix:before,
+.clearfix:after {
+  content: "";
+  display: table;
+}
+.clearfix:after {
+  clear: both;
+}
+.clearfix {
+  *zoom: 1; /*For IE 6&7 only*/
+}
+.green {
+    color: #6D925E;
+}
+.red {
+    color: #E43838;
+}
+
+/* 內容 */
+.header {
+    padding-top: 25px;
+    box-sizing: border-box;
+    background: #393939;
+    height: 100px;
+    font-size: 25px;
+    color: #FFF;
+    text-align: center;
+}
+
+h3 {
+    margin: 12px 0;
+    font-size: 24px;
+}
+.rule-wrap {
+    float: left;
+    width: 500px;
+    clear: both;
+}
+
+/* 內容 */
+.main {
+    margin-top: 25px;
+    padding: 20px;
+}
+.content {
+    margin-top: 20px;
+}
+.right-wrap,
+.left-wrap {
+    margin-top: 20px;
+    float: left;
+    box-sizing: border-box;
+    border: 3px solid #4BC3B8;
+    border-radius: 5px;
+    padding: 20px;
+    width: 350px;
+    max-width: 600px;
+    height: 500px;
+}
+.left-wrap {
+    margin-right: 20px;
+}
+.right-wrap  {
+    position: relative;
+    padding-bottom: 40px;
+}
+.right-wrap .game-switch {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+.right-wrap .game-box {
+    position: relative;
+    padding: 20px 10px;
+    border-radius: 5px;
+}
+.game-box-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 5px;
+    background: rgb(54 55 56 / 62%);
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+}
+.left-wrap .info {
+    height: 400px;
+    overflow-y: auto;
+}
+.show-txet {
+    margin: 20px;
+    font-size: 34px;
+}
+
+.submit-btn,
+button {
+    color: #666;
+    background-color: #EEE;
+    border-color: #EEE;
+    border-radius: 5px;
+    font-weight: 300;
+    font-size: 16px;
+    font-family: "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    text-decoration: none;
+    text-align: center;
+    line-height: 40px;
+    height: 40px;
+    padding: 0 40px;
+    margin: 0;
+    display: inline-block;
+    appearance: none;
+    cursor: pointer;
+    border: none;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-transition-property: all;
+    transition-property: all;
+    -webkit-transition-duration: .2s;
+    transition-duration: .2s;
+}
+.submit-btn:hover,
+button:hover {
+    background-color: #1B9AF7;
+    border-color: #1B9AF7;
+    color: #FFF;
+}
+
+.submit-btn {
+    display: block;
+    margin: 15px auto;
+}
