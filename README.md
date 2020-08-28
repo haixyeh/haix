@@ -23,5 +23,6 @@
     ```
 
 
-    3. 研究 MemCache Redis MySql (尚未執行)
+    3. 研究 MemCache Redis MySql
+        文件網址： https://is.gd/Zjbqhm
     4. 研究Laravel框架 (尚未執行)
