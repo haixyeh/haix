@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員資料設定</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <script src="/web/js/jquery.min.js"></script>
+</head>
+<style>
+        .password-fix-wrap,
+        .info-wrap-user {
+            margin: 0 auto;
+            max-width: 500px;
+            background: #F7F7F7;
+            padding: 25px 15px 25px 10px;
+            font: 12px Georgia, "Times New Roman", Times, serif;
+            color: #888;
+            text-shadow: 1px 1px 1px #FFF;
+            border:1px solid #E4E4E4;
+        }
+        .input-wrap {
+            margin-top: 15px;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+        }
+        .input-wrap label {
+            float: left;
+            width: 20%;
+            text-align: right;
+            padding-right: 10px;
+            margin-top: 6px;
+        }
+        .input-wrap label>span {
+            color: #888;
+            font-size: 15px;
+        }
+        .input-wrap input[type="text"],
+        .input-wrap input[type="email"],
+        .input-wrap input[type="password"],
+        .input-wrap textarea,
+        .input-wrap select {
+            float: left;
+            border: 1px solid #DADADA;
+            color: #888;
+            height: 38px;
+            margin: 0 6px 8px 0;
+            outline: 0 none;
+            padding: 3px 3px 3px 5px;
+            width: 70%;
+            font-size: 12px;
+            line-height:15px;
+            box-sizing: border-box;
+            box-shadow: inset 0px 1px 4px #ECECEC;
+            -moz-box-shadow: inset 0px 1px 4px #ECECEC;
+            -webkit-box-shadow: inset 0px 1px 4px #ECECEC;
+        }
+        .input-wrap select {
+            background-color: #FFF;
+        }
+        .submit-wrap {
+            padding-right: 30px;
+            text-align: right;
+        }
+        .button {
+            display: inline-block;
+            background: #E27575;
+            border: none;
+            padding: 10px 25px 10px 25px;
+            color: #FFF;
+            box-shadow: 1px 1px 5px #B6B6B6;
+            border-radius: 3px;
+            text-shadow: 1px 1px 1px #9E3F3F;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #E27B7B;
+        }
+        
+</style>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="info-wrap-user">
+        <div class="title">會員資料設定</div>
+        <div class="input-wrap account-wrap clearfix">
+            <label for="account"><span>帳號</span></label>
+            <input type="text" id="account"" placeholder="請輸入帳號" disabled>
+        </div>
+        <div class="input-wrap first-name-wrap clearfix">
+            <label for="firstName"><span>姓氏</span></label>
+            <input type="text" id="firstName"" placeholder="請輸入姓氏">
+        </div>
+        <div class="input-wrap last-name-wrap clearfix">
+            <label for="lastName"><span>名字</span></label>
+            <input type="text" id="lastName"" placeholder="請輸入名字">
+        </div>
+        <div class="input-wrap address-wrap clearfix">
+            <label for="address"><span>收貨地址</span></label>
+            <input type="text" id="address"" placeholder="請輸入收貨地址">
+        </div>
+        <div class="input-wrap phone-wrap clearfix">
+            <label for="phone"><span>電話</span></label>
+            <input type="text" id="phone"" placeholder="請輸入電話">
+        </div>
+        <div class="input-wrap email-wrap clearfix">
+            <label for="email"><span>信箱</span></label>
+            <input type="email" id="email" placeholder="請輸入郵件帳號">
+        </div>
+        
+        <div class="input-wrap clearfix">
+            <label for="captcha" name="captcha"><span>驗證碼</span></label>
+            <input type="text" name="captcha" id="captcha" autocomplete="off">
+            <label for=""><span></span></label>
+            <img id="captchaImg" alt="點擊產生圖片">
+        </div>
+        <div class="submit-wrap">
+            <button class="button" id="submit">修改</button>
+        </div>
+    </div>
+    <!-- <button id="fixPassword" class="button">我要修改密碼</button>
+    <div class="password-fix-wrap" style="display: none;">
+        <div class="title">修改密碼</div>
+        <div class="input-wrap clearfix">
+            <label for="password"><span>原密碼</span></label>
+            <input type="password" id="password" placeholder="請輸入原密碼">
+        </div>
+        <div class="input-wrap clearfix">
+            <label for="password"><span>修改密碼</span></label>
+            <input type="password" id="password" placeholder="請輸入修改密碼">
+        </div>
+        <div class="input-wrap clearfix">
+            <label for="password"><span>確認修改密碼</span></label>
+            <input type="password" id="password" placeholder="請輸入確認修改密碼">
+        </div>
+        <div id="captchaDom" class="input-wrap clearfix"> </div>
+        <div class="submit-wrap">
+            <button class="button" id="psdSubmit">修改</button>
+        </div>
+    </div> -->
+    <script>
+         $(document).ready(function(){
+            var userLoginType = 'account';
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+            });
+            // $('#fixPassword').on('click', function() {
+            //     var aaa = $('')
+            //     $('#password-fix-wrap').show();
+            // });
+            // 驗證碼圖片api
+            var captchImgMethod = function() {
+                $.ajax({
+                    url:"/api/haix/flat?" + Math.random(),
+                    success:function(result){
+                        $("#captchaImg").attr('src', result.img);
+                    }}
+                );
+            };
+            // 獲取會員資料
+            $.ajax({
+                url:"/api/haix/userInfo",
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    // function in header load
+                    errorHandle(res, true);
+                    if (res.data) {
+                        for (const key in res.data) {
+                            if (res.data.hasOwnProperty(key)) {
+                                var value = res.data[key];
+                                $('#' + key).val(value);
+                            }
+                        }
+                    }
+                }}
+            );
+            
+            // 初次載入顯示驗證碼
+            captchImgMethod();
+            // 點擊產生驗證碼
+            $("#captchaImg").on('click', function() {
+                captchImgMethod();
+            });
+            // 送出修改
+            $("#submit").click(function(){
+                var inputFiled = $('.info-wrap-user').find('.input-wrap input');
+                var dataEdit = {};
+                $.each(inputFiled, function(item) {
+                    var itemDom = inputFiled[item];
+                    dataEdit[itemDom.id] = itemDom.value;
+                });
+                $.ajax({
+                    url:"/api/haix/userInfo/edit",
+                    data: JSON.stringify(dataEdit),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(result){
+                        alert(result.message || 'error');
+                        if (result.code === 200) {
+                            window.location = '/web';
+                        }
+                    }}
+                );
+            });
+         });
+    </script>
+</body>
+</html>

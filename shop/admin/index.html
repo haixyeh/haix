@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="origin-when-cross-origin">
+    <title>【黑司生活購物網】- 管理頁面</title>
+    <link rel="stylesheet" href="/admin/css/reset.css">
+    <link rel="stylesheet" href="/admin/css/home.css">
+    <script src="/admin/js/jquery.min.js"></script>
+</head>
+<body style="display:none;">
+    <div id="header"></div>
+    <div class="main-wrap clearfix">
+        <div class="nav-wrap">
+            <div id="nav" class="nav clearfix">
+                <a href="#/upCommodity" class="menu-item" data-page="upCommodity">商品上傳</a>
+                <a href="#/goodsList" class="menu-item" data-page="goodsList">商品列表</a>
+                <a href="#/memberList" class="menu-item" data-page="memberList">會員列表</a>
+                <a href="#/commodityList" class="menu-item" data-page="commodityList">商品上下架管理</a>
+                <a href="#/returnGoods" class="menu-item" data-page="returnGoods">退貨管理</a>
+            </div>
+        </div>
+        <div class="main-page" id="mainPage">
+            <!-- 商品上傳 -->
+            <div id="upCommodity" style="display: none;"></div>
+            <!-- 商品列表 -->
+            <div id="goodsList" style="display: none;"></div>
+            <!-- 會員列表 -->
+            <div id="memberList" style="display: none;"></div>
+            <!-- 商品上下架管理 -->
+            <div id="commodityList" style="display: none;"></div>
+            <!-- 退貨管理 -->
+            <div id="returnGoods" style="display: none;"></div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $("#header").load("/admin/header.html", function() {
+                $('body').show();
+            });
+        });
+        $("#nav .menu-item").on('click', function() {
+            var clickItem = this;
+            var clickItemPage = $(this).data('page');
+            $("#"+ clickItemPage).show();
+            $(this).addClass('current');
+            $("#"+ clickItemPage).load('/admin/components/' + clickItemPage);  // 點擊位置載入頁面
+            $(clickItem).siblings().each(function() {
+                var siblingsItem = this;
+                var siblingsItemPage = $(siblingsItem).data('page');
+                if (clickItem !== clickItemPage) {
+                    $(".main-page").find("#" + siblingsItemPage).hide();
+                    $("#"+ clickItemPage).html('');
+                    $(this).removeClass('current');
+                }
+            });
+        });
+        if (location.hash && location.hash.includes('#/')) {
+            var page = location.hash.replace('#/', '');
+            $("#nav").find('.menu-item').each(function() {
+                if ($(this).data('page') === page)
+                $(this).click();
+            })
+        } else {
+            // 預設開啟第一個頁面（商品上傳）
+            $("#nav").find('.menu-item')[0].click();
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員登入頁面</title>
+    <link rel="stylesheet" href="/admin/css/reset.css">
+    <script src="/admin/js/jquery.min.js"></script>
+</head>
+<style>
+        .login-wrap-user {
+            margin: 25px auto;
+            max-width: 500px;
+            background: #F7F7F7;
+            padding: 25px 15px 25px 10px;
+            font: 12px Georgia, "Times New Roman", Times, serif;
+            color: #888;
+            text-shadow: 1px 1px 1px #FFF;
+            border:1px solid #E4E4E4;
+        }
+        .input-wrap {
+            margin-top: 15px;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+        }
+        .submit-wrap {
+            padding-right: 30px;
+            text-align: right;
+        }
+        .button {
+            display: inline-block;
+            background: #E27575;
+            border: none;
+            padding: 10px 25px 10px 25px;
+            color: #FFF;
+            box-shadow: 1px 1px 5px #B6B6B6;
+            border-radius: 3px;
+            text-shadow: 1px 1px 1px #9E3F3F;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #E27B7B;
+        }
+        
+</style>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="login-wrap-user">
+        <div class="title">會員登入</div>
+        <div class="input-wrap clearfix">
+            <label for="loginType"><span>選擇登入方式</span></label>
+            <select name="loginType" id="loginType">
+                <option value="account">帳號</option>
+                <option value="email">信箱</option>
+            </select>
+        </div>
+        <div class="input-wrap account-wrap clearfix">
+            <label for="account"><span>帳號</span></label>
+            <input type="text" id="account"" placeholder="請輸入帳號">
+        </div>
+        <div class="input-wrap email-wrap clearfix" style="display: none;">
+            <label for="email"><span>信箱</span></label>
+            <input type="email" id="email" placeholder="請輸入郵件帳號">
+        </div>
+        <div class="input-wrap clearfix">
+            <label for="password"><span>密碼</span></label>
+            <input type="password" id="password" placeholder="請輸入密碼">
+        </div>
+        <div class="input-wrap clearfix">
+            <label for="captcha" name="captcha"><span>驗證碼</span></label>
+            <input type="text" name="captcha" id="captcha" autocomplete="off">
+            <label for=""><span></span></label>
+            <img id="captchaImg" alt="點擊產生圖片">
+        </div>
+        <div class="submit-wrap">
+            <button class="button" id="submit">登入</button>
+        </div>
+    </div>
+    <script>
+         $(document).ready(function(){
+            var userLoginType = 'account';
+            $("#header").load("/admin/header.html", function() {
+                $('body').show();
+            });
+            // 驗證碼圖片api
+            var captchImgMethod = function() {
+                $.ajax({
+                    url:"/api/haix/flat?" + Math.random(),
+                    success:function(result){
+                        $("#captchaImg").attr('src', result.img);
+                    }}
+                );
+            };
+            // 初次載入顯示驗證碼
+            captchImgMethod();
+            // 點擊產生驗證碼
+            $("#captchaImg").on('click', function() {
+                captchImgMethod();
+            });
+            $("#loginType").on('change', function() {
+                userLoginType = this.value;
+                if (this.value === 'email') {
+                    $('.account-wrap').hide();
+                }
+                if (this.value === 'account') {
+                    $('.email-wrap').hide()
+                }
+                $("."+ this.value + "-wrap").show();
+            })
+            $("#submit").click(function(){
+                var dataJSON = {
+                    [userLoginType]: $('#'+ userLoginType).val(),
+                    password: $('#password').val(),
+                    captcha: $('#captcha').val()
+                }
+                $.ajax({
+                    url:"/api/admin/login",
+                    data: JSON.stringify(dataJSON),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(result){
+                        alert(result.message || 'error');
+                        if (result.code === 200) {
+                            window.location = '/admin';
+                        }
+                    }}
+                );
+            });
+         });
+    </script>
+</body>
+</html>

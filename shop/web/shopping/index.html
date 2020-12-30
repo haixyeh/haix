@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開幕優惠期間～歡迎選購</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <script src="/web/js/jquery.min.js"></script>
+</head>
+<style>
+    .shopping-wrap {
+        margin: 0 auto;
+        max-width: 900px;
+        background: #EEE;
+    }
+</style>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="shopping-wrap">
+        <h3 class="title">所有商品</h3>
+    </div>
+    <script>
+         $(document).ready(function(){
+            var userLoginType = 'account';
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+            });
+            // 送出修改
+            $("#submit").click(function(){
+                var inputFiled = $('.info-wrap-user').find('.input-wrap input');
+                var dataEdit = {};
+                $.each(inputFiled, function(item) {
+                    var itemDom = inputFiled[item];
+                    dataEdit[itemDom.id] = itemDom.value;
+                });
+                $.ajax({
+                    url:"/api/haix/userInfo/edit",
+                    data: JSON.stringify(dataEdit),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(result){
+                        alert(result.message || 'error');
+                        if (result.code === 200) {
+                            window.location = '/web';
+                        }
+                    }}
+                );
+            });
+         });
+    </script>
+</body>
+</html>

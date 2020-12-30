@@ -1,0 +1,43 @@
+
+.main-wrap {
+    display: block;
+    height: calc(100vh - 131px);
+    overflow: hidden;
+}
+.nav-wrap {
+    float: left;
+    height: 100%;
+    margin-bottom: 20px;
+    background: #293e4e;
+    box-shadow: 1px 1px 5px #1a2b2b;
+}
+.nav {
+    padding: 20px;
+    box-sizing: border-box;
+    width: 250px;
+    font-family: 'KulminoituvaRegular';
+    text-align: center;
+}
+.nav .menu-item {
+    display: block;
+    border-bottom: 2px solid #293e4e;
+    padding: 10px;
+    color: #FFF;
+    font-size: 18px;
+    text-decoration: none;
+    text-shadow: 1px 1px 1px #4c2c0a;
+    cursor: pointer;
+}
+.nav .menu-item:hover,
+.nav .menu-item.current {
+    /* border-bottom: 2px solid #e03b88; */
+    text-shadow: 1px 1px 2px #6eb4e5;
+}
+.main-page {
+    float: left;
+    padding: 20px;
+    box-sizing: border-box;
+    width: calc(100vw - 250px);
+    height: inherit;
+    overflow-y: auto;
+}

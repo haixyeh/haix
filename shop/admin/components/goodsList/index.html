@@ -1,0 +1,266 @@
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<style>
+    .tab {
+        float: left; 
+        margin-right: 2px;
+        border-radius: 3px 3px 0 0;
+        border: 1px solid #666;
+        border-bottom: 0;
+        padding: 5px 10px;
+        background: #FFF;
+        overflow: hidden;
+        outline: none;
+        cursor: pointer;
+    }
+    .tab.active {
+        background: #666;
+        color: #FFF;
+    }
+    td.images {
+        width: 160px;
+    }
+    td.images .images-content {
+        height: 110px;
+        overflow-y: auto;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<div>
+    <h3 class="title">商品列表</h3>
+    <div id="btnWrap"></div>
+    <table id="goodsTable">
+        <thead>
+            <tr>
+                <th data-field="index">編碼</th>
+                <th data-field="name">商品名稱</th>
+                <th data-field="startDate">上架時間</th>
+                <th data-field="endDate">下架時間</th>
+                <th data-field="info" width="150">商品描述</th>
+                <th data-field="amount">商品金額</th>
+                <th data-field="goodsType">商品分類</th>
+                <th data-field="total">庫存量</th>
+                <th data-field="images">圖片</th>
+                <th data-field="oprate">操作</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+
+(function($){
+    // 轉小駝峰
+    function transformStr(str){
+        var re=/-(\w)/g;
+        return str.replace(re,function ($0,$1){
+            return $1.toUpperCase();
+        });
+    }
+    var goods = {
+        setTabButtonStatus: false,
+        fieldAry: [],
+        tabCurrent: 'start',
+        tabelList: {},
+        tabItemName: {
+            start: '上架中',
+            unStart: '未開始',
+            over: '已下架'
+        },
+        clickMethod: {
+            down: function(e, id) {
+                var eventName = $(e).parents('tr').find('.name').text();
+                var check = confirm('確定下架'+ eventName + '?'); 
+                if (check) {
+                    $.ajax({
+                        url:"/api/admin/goods/down/" + id,
+                        type: "PUT",
+                        success:function(res){
+                            if (res.code !== 200) {
+                                alert(res.message);
+                            }
+                            goods.goodsList();
+                        }}
+                    );
+                }
+            },
+            edit: function() {
+
+            },
+            delete: function(e, id) {
+                var eventName = $(e).parents('tr').find('.name').text();
+                var check = confirm('刪除'+ eventName + '?'); 
+                if (check) {
+                    $.ajax({
+                        url:"/api/admin/goods/del/" + id,
+                        type: "PUT",
+                        success:function(res){
+                            if (res.code !== 200) {
+                                alert(res.message);
+                            }
+                            goods.goodsList();
+                        }}
+                    );
+                }
+            }
+        },
+        OprateBtn: {
+            start: {
+                method: [
+                    { 
+                        key: 'down', btnName: '下架',
+                        clickEvent: function(e, id) {
+                            goods.clickMethod.down(e, id);
+                        } 
+                    }
+                ]
+            },
+            unStart: {
+                method: [
+                    // { key: 'edit', btnName: '編輯', clickEvent: function() {} },
+                    { key: 'delete', btnName: '刪除',
+                        clickEvent: function(e, id) {
+                            goods.clickMethod.delete(e, id);
+                        } 
+                    }
+                ]
+            },
+            over: {
+                method: [
+                    // { key: 'edit', btnName: '編輯', clickEvent: function() {} },
+                    { key: 'delete', btnName: '刪除',
+                        clickEvent: function(e, id) {
+                            goods.clickMethod.delete(e, id);
+                        } 
+                    }
+                ]
+            }
+        },
+        mainBtn: function() {
+            var _this = this;
+            $('#goodsTable td.oprate').find('.main-btn').on('click', function() {
+                var dom = this;
+                var method = $(this).data('method');
+                var id = $(this).data('id');
+                _this.OprateBtn[_this.tabCurrent].method.forEach(function(item) {
+                    if (item.key === method) {
+                        item.clickEvent(dom, id);
+                    }
+                });
+            })
+        },
+        setTabButton: function(tabArray) {
+            var _this = this;
+            tabArray.forEach(function(item){
+                tabName = (_this.tabItemName[item] || item);
+                $("#btnWrap").append('<button class="js-'+ item +'  tab">' + tabName + '</button>');
+                $('.js-' + item).on('click', function() {
+                    $(this).addClass('active');
+                    $(this).siblings('button').removeClass('active');
+                    _this.tabCurrent = item;
+                    _this.setGoodsListTable();
+                });
+                $("#btnWrap").find('button')[0].click();
+            })
+            _this.setTabButtonStatus = true;
+        },
+        setGoodsListTable: function() {
+            var _this = this;
+            var field = $("#goodsTable").find('thead tr th');
+            var trContent = [];
+            _this.fieldAry = [];
+            field.each(function() {
+                var fieldName = $(this).data('field');
+                if (!fieldName) {
+                    return;
+                }
+                _this.fieldAry.push(fieldName);
+            });
+            // 設定td欄位
+            var setTdContent = function(classNames, content) {
+                return '<td class="'+ classNames +'">'+ content +'</td>';
+            }
+            _this.tabelList[_this.tabCurrent].forEach(function(item, index) {
+                var tdContent = [];
+                _this.fieldAry.forEach(function(fieldName) {
+                    // 沒有對應欄位名稱
+                    if (!item[fieldName]) {
+                        switch (fieldName) {
+                            case 'index':
+                                tdContent.push(setTdContent(fieldName, index + 1));
+                                break;
+                            case 'oprate':
+                                var methodAll = _this.OprateBtn[_this.tabCurrent].method;
+                                var content = [];
+                                methodAll.forEach(function(list) {
+                                    var btnName = list.btnName;
+                                    var btnMethod = list.key;
+                                    var clickEvent = list.clickEvent;
+                                    var btn = (
+                                        '<button class="main-btn button pink minsize" data-method="'+ btnMethod +'" data-id="'+ item.id +'">'+
+                                            btnName +
+                                        '</button>'
+                                    );
+                                    $(btn).bind({
+                                        click: list.clickEvent
+                                    })
+                                    content.push(btn);
+                                })
+
+                                tdContent.push(setTdContent(fieldName, '<div class="content">'+ content.join('') +'</div>'));
+                                break;
+                            default:
+                                tdContent.push(setTdContent(fieldName, ''));
+                                break;
+                        }
+                        return;
+                    }
+                    switch (fieldName) {
+                        case 'images':
+                            var images = JSON.parse(item[fieldName]);
+                            var imagesDom = [];
+                            images.forEach(function(imgItem) {
+                                imagesDom.push('<a data-fancybox="gallery" href="'+ imgItem +'"><img src="'+ imgItem +'" width="150" height="100"></a>')
+                            });
+                            tdContent.push(setTdContent(fieldName, '<div class="images-content">'+ imagesDom.join('') +'</div>'));
+                            break;
+                        default:
+                            tdContent.push(setTdContent(fieldName, item[fieldName]));
+                            break;
+                    }
+                });
+                trContent.push('<tr>'+ tdContent +'</tr>');
+            });
+            $('#goodsTable').find('tbody').html(trContent);
+            _this.mainBtn();
+        },
+        goodsList: function() {
+            var _this = this;
+            var formData = new FormData();
+            $.ajax({
+                url:"/api/admin/goods/list",
+                type: "GET",
+                success:function(res){
+                    errorHandle(res, true);
+                    if (!res || !res.data) {
+                        return;
+                    }
+                    var tabArray = Object.keys(res.data);
+                    _this.tabelList = res.data;
+                    if (!_this.setTabButtonStatus) _this.setTabButton(tabArray);
+                    _this.setGoodsListTable();
+                }}
+            );
+        },
+        init: function() {
+            var _this = this;
+            _this.goodsList();
+        }
+    };
+    goods.init();
+})(jQuery)
+
+
+
+
+</script>

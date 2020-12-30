@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="origin-when-cross-origin">
+    <title>會員註冊</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <script src="/web/js/jquery.min.js"></script>
+    <style>
+        .regist {
+            margin-left:auto;
+            margin-right:auto;
+            max-width: 500px;
+            background: #F7F7F7;
+            padding: 25px 15px 25px 10px;
+            font: 12px Georgia, "Times New Roman", Times, serif;
+            color: #888;
+            text-shadow: 1px 1px 1px #FFF;
+            border:1px solid #E4E4E4;
+        }
+        .input-wrap {
+            margin-top: 15px;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+        }
+        label {
+            display: block;
+            margin: 0px;
+        }
+        label>span {
+            float: left;
+            width: 20%;
+            text-align: right;
+            padding-right: 10px;
+            margin-top: 10px;
+            color: #888;
+            font-size: 15px;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea,
+        select {
+            border: 1px solid #DADADA;
+            color: #888;
+            height: 30px;
+            margin-bottom: 16px;
+            margin-right: 6px;
+            margin-top: 2px;
+            outline: 0 none;
+            padding: 3px 3px 3px 5px;
+            width: 70%;
+            font-size: 12px;
+            line-height:15px;
+            box-shadow: inset 0px 1px 4px #ECECEC;
+            -moz-box-shadow: inset 0px 1px 4px #ECECEC;
+            -webkit-box-shadow: inset 0px 1px 4px #ECECEC;
+        }
+        .submit-wrap {
+            padding-right: 30px;
+            text-align: right;
+        }
+        .button {
+            display: inline-block;
+            background: #E27575;
+            border: none;
+            padding: 10px 25px 10px 25px;
+            color: #FFF;
+            box-shadow: 1px 1px 5px #B6B6B6;
+            border-radius: 3px;
+            text-shadow: 1px 1px 1px #9E3F3F;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #E27B7B;
+        }
+    </style>
+</head>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="regist" id="regist">
+        <div class="title">會員註冊</div>
+        <div class="input-wrap">
+            <label for="account"><span>帳號</span></label>
+            <input type="text" name="account" id="account">
+        </div>
+        <div class="input-wrap">
+            <label for="password"><span>密碼</span></label>
+            <input type="password" name="password" id="password">
+        </div>
+        <div class="input-wrap">
+            <label for="email"><span>郵件</span></label>
+            <input type="email" name="email" id="email">
+        </div>
+        <div class="input-wrap">
+            <label for="captcha" name="captcha"><span>驗證碼</span></label>
+            <input type="text" name="captcha" id="captcha" autocomplete="off">
+            <label for=""><span></span></label>
+            <img id="captchaImg" alt="點擊產生圖片">
+        </div>
+        <div class="submit-wrap">
+            <button id="submit" class="button">註冊</button>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+            });
+            // 驗證碼圖片api
+            var captchImgMethod = function() {
+                $.ajax({
+                    url:"/api/haix/flat?" + Math.random(),
+                    success:function(result){
+                        $("#captchaImg").attr('src', result.img);
+                    }}
+                );
+            };
+            // 初次載入顯示驗證碼
+            captchImgMethod();
+            // 點擊產生驗證碼
+            $("#captchaImg").on('click', function() {
+                captchImgMethod();
+            });
+            $("#submit").click(function(){
+                var dataJSON = {
+                    name: $('#account').val(),
+                    password: $('#password').val(),
+                    email: $('#email').val(),
+                    captcha: $('#captcha').val()
+                }
+                $.ajax({
+                    url:"/api/haix",
+                    data: JSON.stringify(dataJSON),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(result){
+                        alert(result.message || 'error');
+                        if (result.code === 200) {
+                            window.location = '/web';
+                        }
+                    }}
+                );
+            });
+        });
+    </script>
+</body>
+</html>

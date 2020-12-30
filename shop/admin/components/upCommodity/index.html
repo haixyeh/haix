@@ -1,0 +1,270 @@
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<style>
+.goods-form-wrap {
+    margin-top: 20px;
+    padding: 10px;
+    max-width: 900px;
+    border: 2px solid #8c8c8c;
+    box-shadow: -2px 3px #d0d0d0;
+    border-radius: 2px;
+}
+.goods-form {
+    width: 630px;
+}
+.preview-img {
+    width: 150px; 
+    height: 100px;
+    margin: 0 5px 5px 0;
+}
+.preview-wrap {
+    display: inline-block;
+    vertical-align: middle;
+    width: 75%;
+    /* height: 300px; */
+    overflow: auto;
+}
+.preview {
+    width: 472px;
+}
+.preview li {
+    display: inline-block;
+    list-style: none;
+}
+.goods-form .input-wrap label span, 
+.goods-form .input-wrap input {
+    color: rgb(87, 87, 87);
+    font-size: 15px;
+}
+.input-wrap {
+    margin-bottom: 8px;
+    height: auto;
+}
+.input-wrap input,
+.input-wrap select {
+    border-radius: 5px;
+}
+input[type="file"] {
+    font-size: 12px;
+}
+.tip {
+    font-size: 12px;
+}
+.tip.red {
+    color: #eb4848;
+} 
+.gooods-submit-btn {
+    float: right;
+    margin-top: 20px;
+}
+</style>
+<div>
+    <h3 class="title">商品上傳</h3>
+    <div class="goods-form-wrap clearfix">
+        <form class="goods-form" id="goodsForm">
+            <div class="input-wrap">
+                <label for=""><span>上架時間</span></label>
+                <input id="date" type="date" name="start-date">
+            </div>
+            <div class="input-wrap account-wrap">
+                <label for=""><span>下架時間</span></label>
+                <input id="date" type="date" name="end-date">
+            </div>
+            <div class="input-wrap">
+                <label for="name"><span>商品名稱</span></label>
+                <input type="text" id="name" name="name" placeholder="請輸入商品名稱">
+            </div>
+            <div class="input-wrap">
+                <label for="up[]"><span>上傳商品圖片</span></label>
+                <input type='file' class="upl" name="upl[]" multiple>
+            </div>
+            <div class="input-wrap">
+                <label for="up[]">
+                    <span>圖片預覽</span>
+                    <p class="tip red">(點擊圖片預覽)</p>
+                </label>
+                <div class="preview-wrap">
+                    <div class="preview" id="preview">...圖片預覽位置</div>
+                </div>
+            </div>
+            <div class="input-wrap">
+                <label for="info"><span>商品描述</span></label>
+                <input type="text" id="info" name="info" placeholder="請輸入商品描述">
+            </div>
+            <div class="input-wrap">
+                <label for="amount"><span>商品金額</span></label>
+                <input type="number"" id="amount"" name="amount" placeholder="請輸入商品金額">
+            </div>
+            <div class="input-wrap">
+                <label for="total""><span>庫存量</span></label>
+                <input type="number"" id="total"" name="total" placeholder="請輸入庫存量">
+            </div>
+            <div class="input-wrap">
+                <label for="goodsType""><span>商品分類</span></label>
+                <select name="goods-type" id="goodsType"></select>
+            </div>
+            <div class="input-wrap">
+                <label for=""><span>是否推廣商品</span></label>
+                <input type="radio" name="is-recommon" value="Y">
+                <span>是</span>
+                <input type="radio" name="is-recommon" value="N" checked>
+                <span>否</span>
+            </div>
+            <button class="gooods-submit-btn button pink" id="goodsSubmit">
+                送出
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+
+(function($){
+    // 轉小駝峰
+    function transformStr(str){
+        var re=/-(\w)/g;
+        return str.replace(re,function ($0,$1){
+            return $1.toUpperCase();
+        });
+    }
+    var goods = {
+        goodsList: function() {
+            var formData = new FormData();
+            $.ajax({
+                url:"/api/admin/categories",
+                type: "GET",
+                success:function(res){
+                    errorHandle(res, true);
+                    if (!res || !res.data) {
+                        return;
+                    }
+
+                    var goodsTypeList = [];
+                    for (const key in res.data) {
+                        if (res.data.hasOwnProperty(key)) {
+                            const name = res.data[key];
+                            goodsTypeList.push('<option value="'+ key +'">'+ name +'</option>');
+                        }
+                    }
+
+                    $('#goodsType').html(goodsTypeList);
+                }}
+            );
+        },
+        goodsSubmit: function(e) {
+            e.preventDefault();
+            var formData = new FormData();
+            var hasError = false;
+            $('#goodsForm').find('input, select').each(function(index, inputDom) {
+                if (hasError) {
+                    return;
+                }
+                var inputType = $(inputDom).attr('type');
+                var inputName = $(inputDom).attr('name');
+                var inputValue = $(inputDom).val();
+
+                if (!inputValue) {
+                    var filedName = $(inputDom).siblings('label').text();
+                    var errorMsg = '請先輸入'+ filedName;
+                    hasError = true;
+                    if (inputType === 'file') errorMsg = '請先'+ filedName;
+                    alert(errorMsg);
+                    return;
+                }
+                if (inputType === 'radio') {
+                    if (!$(inputDom).is(":checked")) return;
+                }
+                if (!inputName) {
+                    console.error('須設置input name');
+                }
+                if (inputType === 'file') {
+                    // 所有檔案
+                    var files = $(inputDom).get(0).files;
+                    $(files).each((index, file) => {
+                        formData.append('upload' + index, file);
+                    });
+                    return;
+                }
+                var postName = transformStr(inputName);
+                formData.append(postName, inputValue);
+            })
+
+            $.ajax({
+                url:"/api/admin/goods/add",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: "POST",
+                success:function(res){
+                    if (res.code === 200) {
+                        alert(res.message || 'error');
+                        location.reload();
+                    }
+                }
+            });
+        },
+        init: function() {
+            var _this = this;
+            _this.goodsList();
+            $('#goodsSubmit').on('click', _this.goodsSubmit)
+        }
+    };
+    goods.init();
+    // 上傳 + 預覽圖片
+    var Preview = new function (){
+        var root = $(".goods-form");
+        // 連續的圖片編碼
+        var imgcode = '';
+        // 選取發生改變
+        this.change_file = function (){
+            root.on("change", ".upl", function (){
+                show(this);
+            });
+        }
+        // 批次圖片，先清空後再插入
+        var show = function (input){
+            if (input.files && input.files[0]) {
+                if (input.files[0] && input.files.length > 5) {
+                    alert('最多上傳5張, 請重新上傳');
+                    realReset();
+                    clean();
+                    return;
+                }
+                clean();
+                each_img(input.files);
+            }
+        }
+        // 批次讀取，最後再一次寫入
+        var each_img = function (files){
+            $.each(files, function (index, file){
+                var src = URL.createObjectURL(file);
+                create_imgcode(src);
+            });
+            // 放置預覽元素後重設
+            root.find(".preview").html(imgcode); 
+            reset();
+        }
+        // 建立圖片
+        var create_imgcode = function(src){
+            imgcode += '<a data-fancybox="gallery" href="' + src + '"><img class="preview-img" src="' + src + '"></a>';
+        }
+        // 清空預覽區域
+        var clean = function (){
+            root.find(".preview").empty();
+        }
+        // 還原 input[type=file]
+        var reset = function (){
+            imgcode = '';
+            // root.find(".upl").val(null);
+        }
+        var realReset = function (){
+            imgcode = '';
+            root.find(".upl").val(null);
+        }
+    }
+
+    // 執行
+    Preview.change_file();
+})(jQuery)
+</script>

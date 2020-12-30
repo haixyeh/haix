@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="origin-when-cross-origin">
+    <title>【黑司生活購物網】首頁</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <link rel="stylesheet" href="/web/css/home.css">
+    <script src="/web/js/jquery.min.js"></script>
+</head>
+<body style="display:none;">
+    <div id="header"></div>
+    <div id="mainbody">
+        <div id="home">
+            
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+            });
+        });
+    </script>
+</body>
+</html>

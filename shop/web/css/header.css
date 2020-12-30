@@ -1,0 +1,148 @@
+@font-face {
+    font-family: 'KulminoituvaRegular';
+    src: url('/web/lib/kulminoituva.ttf');
+}
+.header {
+    min-height: 163px;
+    border-bottom: 1px solid #1d72af;
+}
+.header-top {
+    background-image: linear-gradient(to right, #868f96 0%, #596164 100%);
+    height: 30px;
+}
+.go-home {
+    float: right;
+    color: #FFF;
+    text-decoration: none;
+    padding: 7px;
+}
+.go-home:hover {
+    color: #EEE;
+    text-decoration: underline;
+}
+.logo {
+    float: left;
+    box-sizing: border-box;
+    padding: 29px;
+    width: 250px;
+    height: 133px;
+    background: #e5eaea;
+    color: #515c76;
+    color: #5f2902;
+    text-align: center;
+    font-size: 38px;
+    font-family: 'KulminoituvaRegular';
+}
+.login-wrap {
+    float: right;
+    margin-right: 20px;
+    padding: 20px 20px 0;
+    text-align: center;
+}
+.login-wrap .logout {
+    margin-top: 25px;
+    display: inline-block;
+    width: 100px;
+    border: 1px solid #1d72af;
+    padding: 4px 9px;
+    border-radius: 99em;
+    color: #FFF;
+    text-align: center;
+    background: #000;
+    cursor: pointer;
+}
+.login-wrap .logout:hover {
+    border: 1px solid #1d72af;
+    background: #333;
+}
+.login-wrap .welcome {
+    letter-spacing: 10px;
+}
+.login-wrap .welcome span {
+    color: #1d72af;
+}
+.regist-btn,
+.login-btn {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    text-transform: uppercase;
+    padding: 6px 22px 12px;
+    background-color: #fff;
+    color: #666;
+    border: 2px solid #666;
+    border-radius: 7px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    -webkit-transition: all .5s ease;
+    transition: background-position .5s ease;
+    font-family: system-ui;
+    letter-spacing: 2px;
+}
+.regist-btn:after,
+.login-btn:after {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background-size: 7px 7px;
+    height: 7px;
+    width: 100%;
+    background-image: repeating-linear-gradient(45deg, #666, #666 1px, transparent 2px, transparent 5px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-top: 1px solid #666;
+}
+.regist-btn:hover,
+.login-btn:hover {
+    background-color: #666;
+    color: #FFF;
+    border-color: #000;
+}
+@keyframes stripe-slide {
+    0% { background-position: 0% 0; }
+    100% { background-position: 100% 0; }
+}
+@keyframes stripe-slide2 {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0% 0; }
+}
+.regist-btn:hover:after,
+.login-btn:hover:after {
+    background-image: repeating-linear-gradient(
+        45deg,
+        #FFF,
+        #FFF 1px,
+        transparent 2px,
+        transparent 5px
+    );
+    border-top: 1px solid #000;
+    animation: stripe-slide 6s infinite linear forwards;
+}
+.regist-btn:hover:after {
+    animation: stripe-slide2 6s infinite linear forwards;
+}
+.nav-wrap {
+    margin-bottom: 20px;
+}
+.nav {
+    background: #293e4e;
+    font-family: 'KulminoituvaRegular';
+    box-shadow: 1px 1px 5px #1a2b2b;
+    text-align: center;
+}
+.nav a {
+    display: inline-block;
+    padding: 10px 10px 0;
+    height: 35px;
+    color: #FFF;
+    font-size: 24px;
+    text-decoration: none;
+    text-shadow: 1px 1px 1px #4c2c0a;
+}
+.nav a:hover,
+.nav a.current {
+    background: #000;
+    text-shadow: 1px 1px 2px #6eb4e5;
+}

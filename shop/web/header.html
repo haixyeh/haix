@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/web/css/header.css">
+    <script src="/web/js/common.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top clearfix">
+            <a id="goHome" href="/web" class="go-home" style="display: none;">返回首頁</a>
+        </div>
+        <a href="/web">
+            <div class="logo">Haix's <br/>live shop</div>
+        </a>
+        <div class="login-wrap">
+            <div id="unLoginShow">
+                <a id="login" class="login-btn" href="/web/login">login</a>
+                <a id="regist" class="regist-btn" href="/web/regist">Register</a>
+            </div>
+            <div id="isLogin">
+                <div id="welcome"></div>
+                <div id="logOut" class="logout">登出</div>
+            </div>
+        </div>
+    </div>
+    <div class="nav-wrap">
+        <div id="nav" class="nav clearfix">
+            <!-- <a href="/web/" data-page="home">home</a>
+            <a href="/web/shop" data-page="shop">shopping</a>
+            <a href="/web/member" data-page="info">member</a> -->
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                url:"/api/haix/userInit",
+                type: "GET",
+                success:function(res){
+                    errorHandle(res, true);
+                    if (res.data.is_login === 'Y') {
+                        if(location.pathname.indexOf('login') >= 1 || location.pathname.indexOf('regist') >= 1) {
+                            location.href = '/web';
+                            return;
+                        }
+                        $('#unLoginShow').hide();
+                        $('#welcome').html('<div class="welcome">歡迎光臨<span>' + res.data.user +'</span></div>');
+                    } else {
+                        $('#isLogin').hide();
+                    }
+                    if (res.data && res.data.menu && res.data.menu.length) {
+                        var menuDom = [];
+                        res.data.menu.forEach(function(list) {
+                            if (list.open === 'N') {
+                                return;
+                            }
+                            menuDom.push('<a href="'+ list.link +'" data-page="home">'+ list.name +'</a>');
+                        });
+                        $('#nav').html(menuDom);
+                    }
+                }}
+            );
+
+            $('#logOut').on('click', function() {
+                    $.ajax({
+                    url:"/api/haix/out",
+                    type: "GET",
+                    success:function(res){
+                        errorHandle(res, true);
+                    }}
+                );
+            });
+            /* - only path,  */
+            var showhideMap = {
+                goHome: {
+                    notShow: ['-/web/']
+                },
+                login: {
+                    notShow: ['login']
+                },
+                regist: {
+                    notShow: ['regist']
+                }
+            };
+            Object.keys(showhideMap).map(function(item) {
+                var notShow = showhideMap[item].notShow;
+                // 項目不要顯示的頁面
+                if(!notShow) {
+                    return;
+                }
+                notShow.forEach(pathname => {
+                    // 第一個為- 表示網址全符合
+                    if (pathname.indexOf('-') === 0) {
+                        var newPath = pathname.replace('-', '');
+                        if(location.pathname === newPath) {
+                            $('#' + item).hide();
+                        } else {
+                            $('#' + item).show();
+                        }
+                        return;
+                    }
+                    // 須網址部份符合
+                    if (location.pathname.indexOf(pathname) >= 0) {
+                        $('#' + item).hide();
+                    } else {
+                        $('#' + item).show();
+                    }
+                });
+            })
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/admin/css/header.css">
+    <script src="/admin/js/common.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top clearfix">
+            <a id="goHome" href="/admin" class="go-home" style="display: none;">返回首頁</a>
+        </div>
+        <a href="/admin">
+            <div class="logo">管理頁面</div>
+        </a>
+        <div class="login-wrap">
+            <div id="unLoginShow">
+                <a id="login" class="login-btn" href="/admin/login">login</a>
+            </div>
+            <div id="isLogin">
+                <div id="welcome"></div>
+                <div id="logOut" class="logout">登出</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                url:"/api/admin/userInit",
+                type: "GET",
+                success:function(res){
+                    errorHandle(res, true);
+                    if (res.data.is_login === 'Y') {
+                        if(location.pathname.indexOf('login') >= 1 || location.pathname.indexOf('regist') >= 1) {
+                            location.href = '/admin';
+                            return;
+                        }
+                        $('#unLoginShow').hide();
+                        $('#welcome').html('<div class="welcome">歡迎光臨<span>' + res.data.user +'</span></div>');
+                    } else {
+                        $('#isLogin').hide();
+                        if (location.pathname.indexOf('login') == -1 ) {
+                            location.href = '/admin/login';
+                        }
+                    }
+                }}
+            );
+
+            $('#logOut').on('click', function() {
+                    $.ajax({
+                    url:"/api/admin/out",
+                    type: "GET",
+                    success:function(res){
+                        errorHandle(res, true);
+                    }}
+                );
+            });
+            /* - only path,  */
+            var showhideMap = {
+                goHome: {
+                    notShow: ['-/admin/']
+                },
+                login: {
+                    notShow: ['login']
+                }
+            };
+            Object.keys(showhideMap).map(function(item) {
+                var notShow = showhideMap[item].notShow;
+                // 項目不要顯示的頁面
+                if(!notShow) {
+                    return;
+                }
+                notShow.forEach(pathname => {
+                    // 第一個為- 表示網址全符合
+                    if (pathname.indexOf('-') === 0) {
+                        var newPath = pathname.replace('-', '');
+                        if(location.pathname === newPath) {
+                            $('#' + item).hide();
+                        } else {
+                            $('#' + item).show();
+                        }
+                        return;
+                    }
+                    // 須網址部份符合
+                    if (location.pathname.indexOf(pathname) >= 0) {
+                        $('#' + item).hide();
+                    } else {
+                        $('#' + item).show();
+                    }
+                });
+            })
+        });
+    </script>
+</body>
+</html>
