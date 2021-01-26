@@ -12,36 +12,36 @@
         .info-wrap-user {
             margin: 0 auto;
             max-width: 500px;
-            background: #F7F7F7;
+            background: #FFF;
             padding: 25px 15px 25px 10px;
             font: 12px Georgia, "Times New Roman", Times, serif;
             color: #888;
             text-shadow: 1px 1px 1px #FFF;
             border:1px solid #E4E4E4;
         }
-        .input-wrap {
+        .info-wrap-user .input-wrap {
             margin-top: 15px;
         }
         .title {
             text-align: center;
             font-size: 28px;
         }
-        .input-wrap label {
+        .info-wrap-user .input-wrap label {
             float: left;
             width: 20%;
             text-align: right;
             padding-right: 10px;
             margin-top: 6px;
         }
-        .input-wrap label>span {
+        .info-wrap-user .input-wrap label>span {
             color: #888;
             font-size: 15px;
         }
-        .input-wrap input[type="text"],
-        .input-wrap input[type="email"],
-        .input-wrap input[type="password"],
-        .input-wrap textarea,
-        .input-wrap select {
+        .info-wrap-user .input-wrap input[type="text"],
+        .info-wrap-user .input-wrap input[type="email"],
+        .info-wrap-user .input-wrap input[type="password"],
+        .info-wrap-user .input-wrap textarea,
+        .info-wrap-user .input-wrap select {
             float: left;
             border: 1px solid #DADADA;
             color: #888;
@@ -57,28 +57,13 @@
             -moz-box-shadow: inset 0px 1px 4px #ECECEC;
             -webkit-box-shadow: inset 0px 1px 4px #ECECEC;
         }
-        .input-wrap select {
+        .info-wrap-user .input-wrap select {
             background-color: #FFF;
         }
         .submit-wrap {
             padding-right: 30px;
             text-align: right;
-        }
-        .button {
-            display: inline-block;
-            background: #E27575;
-            border: none;
-            padding: 10px 25px 10px 25px;
-            color: #FFF;
-            box-shadow: 1px 1px 5px #B6B6B6;
-            border-radius: 3px;
-            text-shadow: 1px 1px 1px #9E3F3F;
-            cursor: pointer;
-        }
-        .button:hover {
-            background: #E27B7B;
-        }
-        
+        }        
 </style>
 <body style="display: none;">
     <div id="header"></div>
@@ -116,7 +101,7 @@
             <img id="captchaImg" alt="點擊產生圖片">
         </div>
         <div class="submit-wrap">
-            <button class="button" id="submit">修改</button>
+            <button class="button pink" id="submit">修改</button>
         </div>
     </div>
     <!-- <button id="fixPassword" class="button">我要修改密碼</button>

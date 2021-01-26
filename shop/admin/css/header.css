@@ -168,6 +168,10 @@
     background-color: #FFF;
 }
 
+#captchaImg {
+    margin-top: 10px;
+}
+
 /* table */
 table {
     font-family:"Trebuchet MS", Arial, Helvetica, sans-serif; 
@@ -221,11 +225,11 @@ button.gray {
     color: #FFF;
     box-shadow: 1px 1px 5px #B6B6B6;
     border-radius: 3px;
-    text-shadow: 1px 1px 1px #5a5858;
+    text-shadow: 1px 1px 1px #5A5858;
     cursor: pointer;
 }
 button.gray:hover {
-    background: #807a7a;
+    background: #665e5e;
 }
 
 button.minsize {

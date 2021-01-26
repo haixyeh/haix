@@ -7,28 +7,28 @@
 <body>
     <div class="header">
         <div class="header-top clearfix">
+            <div id="shopCar"></div>
+            <button id="openCar" class="button gray">查看購物車</button>
             <a id="goHome" href="/web" class="go-home" style="display: none;">返回首頁</a>
         </div>
-        <a href="/web">
-            <div class="logo">Haix's <br/>live shop</div>
-        </a>
-        <div class="login-wrap">
-            <div id="unLoginShow">
-                <a id="login" class="login-btn" href="/web/login">login</a>
-                <a id="regist" class="regist-btn" href="/web/regist">Register</a>
-            </div>
-            <div id="isLogin">
-                <div id="welcome"></div>
-                <div id="logOut" class="logout">登出</div>
+        <div class="header-mid clearfix">
+            <a href="/web">
+                <div class="logo">Haix's <br/>live shop</div>
+            </a>
+            <div class="login-wrap">
+                <div id="unLoginShow">
+                    <a id="login" class="login-btn" href="/web/login">login</a>
+                    <a id="regist" class="regist-btn" href="/web/regist">Register</a>
+                </div>
+                <div id="isLogin">
+                    <div id="welcome"></div>
+                    <div id="logOut" class="logout">登出</div>
+                </div>
             </div>
         </div>
     </div>
     <div class="nav-wrap">
-        <div id="nav" class="nav clearfix">
-            <!-- <a href="/web/" data-page="home">home</a>
-            <a href="/web/shop" data-page="shop">shopping</a>
-            <a href="/web/member" data-page="info">member</a> -->
-        </div>
+        <div id="nav" class="nav clearfix"></div>
     </div>
     <script>
         $(document).ready(function(){
@@ -107,6 +107,12 @@
                 });
             })
         });
+        $('#openCar').on('click', function() {
+                $('#shopCar').show();
+                $("#shopCar").load("/web/components/shopCar", function() {
+                    console.log('shopCar load');
+                });
+            });
     </script>
 </body>
 </html>

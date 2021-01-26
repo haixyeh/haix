@@ -1,0 +1,344 @@
+<style>
+    .mask-content-wrap {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 99999;
+    }
+    .mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #000;
+        opacity: 0.7;
+        width: 100%;
+        height: 100%;
+    }
+    .shop-car-wrap {
+        position: relative;
+        margin: 5% auto 0;
+        border-radius: 5px;
+        padding: 20px;
+        width: 88%;
+        min-height: 500px;
+        max-height: 80vh;
+        background: #FFF;
+        overflow-y: auto;
+    }
+    .close-car-btn {
+        position: fixed;
+        top: 5px;
+        right: 5px;
+        color: red;
+        border: 2px solid;
+        border-radius: 99em;
+        padding: 6px;
+        box-shadow: 3px 4px #847878;
+        background: #FFF;
+        font-family: 'KulminoituvaRegular';
+        cursor: pointer;
+        transition: .3s ease-in-out;
+    }
+    .close-car-btn:hover {
+        box-shadow: -1px -1px #847878;
+        top: 10px;
+        transition: .1s ease-in-out;
+    }
+    .shop-table-title {
+        margin: 15px 0 5px;
+        font-size: 14px;
+        color: #6D6A6A;
+    }
+    table.shop-car {
+        width: 100%;
+    }
+    table.shop-car tr {
+        border: 3px solid #E7E7E7;
+    }
+    table.shop-car td {
+        vertical-align: middle;
+    }
+    table.shop-car td.prd-detail {
+        box-sizing: border-box;
+        padding: 20px;
+        max-width: 250px;
+    }
+    table.shop-car td.prd-img {
+        max-width: 240px;
+    }
+    .prd-img-wrap {
+        box-sizing: border-box;
+        padding: 20px 0 20px 20px;
+        width: 200px;
+    }
+    .prd-img-wrap img {
+        width: 100%;
+        height: auto;
+    }
+    table.shop-car .last-count-tr {
+        border: 0;
+    }
+    table.shop-car .last-count-tr td {
+        padding: 20px;
+    }
+    .checkout-form {
+        float: left;
+        padding: 30px;
+    }
+    .checkout-form .input-wrap,
+    .checkout-form .list-input {
+        margin-bottom: 10px;
+    }
+    .tip-red {
+        margin-left: 10px;
+        color: #F00;
+        font-size: 13px;
+    }
+    .red {
+        color: #F00;
+    }
+</style>
+<div class="mask-content-wrap">
+    <div class="mask"></div>
+    <div class="shop-car-wrap">
+        <div class="close-car-btn">
+            Close
+        </div>
+        <div class="checkout-form-wrap clearfix">
+            <form id="checkoutForm" class="checkout-form">
+                <div class="input-wrap">
+                    <button id="inject" class="button gray minsize">寫入會員資料</button>
+                    <span id="toFullPrice" class="tip-red">尚差$xxx可獲得折扣</span>
+                </div>
+                <div class="input-wrap">
+                    <label for="">收件者：</label>
+                    <input type="text" name="name">
+                </div>
+                <div class="input-wrap">
+                    <label for="">收件地址：</label>
+                    <input type="text" name="address">
+                </div>
+                <div class="input-wrap">
+                    <label for="">聯絡電話：</label>
+                    <input type="text" name="phone">
+                </div>
+                <div class="input-wrap">
+                    <label for="">消費總計：</label>
+                    <span id="totalAmount"></span>
+                </div>
+                <div class="input-wrap has-proms">
+                    <label for="">折扣金額：</label>
+                    <span id="promsPrice" class="red"></span>
+                </div>
+                <div class="input-wrap has-proms">
+                    <label for="">折扣後金額：</label>
+                    <span id="finalPrice"></span>
+                </div>
+                <div class="list-input">配送方式： <input type="radio" id="sendWay" checked="checked"><label for="sendWay">貨到付款</label></div>
+                <button id="checkoutSubmit" class="button pink">結帳</button>
+            </form>
+        </div>
+        <div id="vipInfo" class="vip-info"></div>
+        <br><hr />
+        <p class="shop-table-title">購物項目：</p>
+        <table id="shopCarTable" class="shop-car">
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    var shopCar = {
+        wrap: $('.mask-content-wrap').parent(),
+        closeParent: function() { 
+            var _this = this;
+            shopCar.wrap.hide();
+            $(_this.wrap).html('');
+        },
+        closeBtn: $('.close-car-btn'),
+        userInfo: {},
+        totalAmount: 0,
+        totalCount: 0,
+        getShopCarData: function() {
+            var _this = this;
+            $.ajax({
+                url:"/api/haix/goods/car/show",
+                type: "GET",
+                success:function(res){
+                    console.log(res);
+                    errorHandle(res);
+                    if (!res || !res.data) {
+                        return;
+                    }
+                    var infoData = res.data.shopList;
+                    var levelProms = res.data.levelProms;
+                    var userLevel = res.data.userLevel;
+                    var price = levelProms.price;
+                    _this.userInfo = res.data.userInfo;
+                    _this.setShopCarTable(infoData, res.data.totalAmount, res.data.totalCount);
+
+                    $('#checkoutForm #inject').on('click', function(e){
+                        e.preventDefault();
+                        if (!_this.userInfo.phone) {
+                            alert('請先至[Member]頁面設定會員資料');
+                            return;
+                        }
+
+                        $("#checkoutForm").find('input[type="text"]').each(function() {
+                            var filed = $(this).attr('name');
+                            if (filed === 'name') {
+                                $(this).val(_this.userInfo.firstName +_this.userInfo.lastName);
+                                return;
+                            }
+                            if (_this.userInfo[filed]) {
+                                $(this).val(_this.userInfo[filed]);
+                            }
+                        });
+                    });
+                    // 設定優惠滿額顯示
+                    if (price.toFullPrice) {
+                        $('#toFullPrice').text('(目前等級'+ levelProms.levelName +':消費在滿 ＄'+ price.toFullPrice + ', 即可獲得優惠)');
+                    } else {
+                        $('#toFullPrice').hide();
+                    }
+                    // 無優惠隱藏欄位
+                    if (price.isHasProms === 'N') {
+                        $('#checkoutForm .has-proms').hide();
+                        return;
+                    }
+                    // 有優惠顯示購物金額
+                    Object.keys(price).forEach(function(itemName) {
+                        // console.log(itemName, 'itemName');
+                        var itemDom =$('#checkoutForm #' + itemName)[0];
+                        if (itemDom) {
+                            $(itemDom).text('$' + price[itemName]);
+                        }
+                    });
+                    // 顯示會員等級
+                    // if (userLevel) {
+                    //     if (userLevel.offer !== 'Y') {
+                    //         $('#vipInfo').text('目前會員等級：' userLevel.levelName);
+                    //         return;
+                    //     }
+                    //     var contentText = userLevel.levelName + ":" + 
+                        
+                    // }
+                }}
+            );
+        },
+        setShopCarTable: function(data, totalAmount, totalCount) {
+            var _this = this;
+            if (!data || !data.length) {
+                $('.shop-car-wrap #shopCarTable tbody').text('未加入購物車項目');
+                $('.checkout-form-wrap').hide();
+                return;
+            }
+            var allList = [];
+            data.forEach(function(list) {
+                allList.push(_this.setTrContent(list));
+            });
+            var lastTrTotal = '<tr class="last-count-tr">' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '<td>總數量: '+ totalCount +'</td>' +
+                    '<td>總價格: $<b>' + totalAmount + '</b></td>' +
+                '</tr>';
+            $('#totalAmount').text('$' + totalAmount);
+            allList.push(lastTrTotal);
+            $('.shop-car-wrap #shopCarTable tbody').html(allList.join(''));
+
+            // 移除購物車商品
+            $('.del-goods').on('click', function(e) {
+                e.preventDefault();
+                goodsId = $(this).data('id');
+
+                $.ajax({
+                    url:"/api/haix/goods/car/" + goodsId,
+                    type: "PUT",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert(res.message);
+                            return;
+                        }
+                        _this.getShopCarData();
+                    }}
+                );
+            });
+        },
+        setTrContent: function(list) {
+            var imageUrl = JSON.parse(list.images)[0];
+            var trContent = (
+                    '<tr>'+
+                        '<td class="prd-img">'+
+                            '<div class="prd-img-wrap">' +
+                                '<img class="imgGoods" src="'+ imageUrl +'">'+
+                            '</div>'+
+                        '</td>'+
+                        '<td class="prd-detail" >' +
+                            '<a class="prd-name" href="/web/goods/?id='+ list.id +'" >' +
+                                list.name+
+                            '</a>'+
+                            '<div class="prd-specification">'+
+                                '<p>'+ list.info +'</p>'+
+                            '</div>'+
+                        '</td>'+
+                        '<td>數量： <span>x'+ list.count +'</span></td>'+
+                        '<td class="prd-price">'+
+                            '<p>單價：'+
+                                '<span>$<b>'+ list.amount +'</b></span>'+
+                            '</p>'+
+                            '<p>總價：'+
+                                '<span>$<b>'+ (list.count * list.amount) +'</b></span>'+
+                            '</p>'+
+                        '</td>' +
+                        '<td><button data-id="'+ list.id +'" class="del-goods">刪除</button></td>'+
+                    '</tr>'
+                );
+            return trContent;
+        },
+        setSubmit: function() {
+            $('#checkoutSubmit').on('click', function(e){
+                e.preventDefault();
+                var postData = {};
+                $('#checkoutForm').find('input[type="text"]').each(function(index, dom) {
+                    var filedName = $(this).attr('name');
+                    var filedValue = $(this).val();
+                    if (!filedValue) {
+                        alert($(this).siblings('label').text() + '請填寫欄位');
+                        return false;   // 跳脫 each
+                    }
+
+                    postData[filedName] = filedValue;
+                });
+                console.log(postData, 'postData');
+                $.ajax({
+                    url:"/api/haix/goods/buy/",
+                    type: "POST",
+                    data: JSON.stringify(postData),
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert(res.message);
+                            return;
+                        }
+                        // $('#openCar').click();
+                        _this.closeParent();
+                    }}
+                );
+            });
+        },
+        init: function(){
+            var _this = this;
+            _this.closeBtn.on('click', function() {
+                _this.closeParent();
+            });
+            _this.getShopCarData();
+            _this.setSubmit();
+        }
+    }
+    shopCar.init();
+</script>

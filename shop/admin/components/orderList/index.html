@@ -1,0 +1,168 @@
+<div>
+    <h3 class="title">訂單管理</h3>
+    <div id="tab"></div>
+    <table id="orderListTable">
+        <thead>
+            <tr>
+                <th name="name">收件者</th>
+                <th name="phone">電話</th>
+                <th name="status">處理狀態</th>
+                <th name="goods">購買貨品</th>
+                <th name="address">地址</th>
+                <th name="updated_at">最後異動時間</th>
+                <th name="oprate">操作</th>
+            </tr>
+        </thead>
+        <tbody id="oderList"></tbody>
+    </table>
+</div>
+<style>
+    .goods-item-list {
+        margin-top: 5px;
+        padding: 5px;
+        border: 1px solid #7D9A9E;
+        border-radius: 5px;
+        background: #A6D8DA;
+        font-size: 13px;
+    }
+    .goods-item-list span {
+        float: right;
+        margin-left: 5px;
+        border-radius: 5px;
+        padding: 0 5px;
+        background: #4C5569;
+        color: #FFF;
+    }
+    .item-name {
+        float: left;
+    }
+</style>
+<script>
+    (function($){
+        const order = {
+            init: function() {
+                var _this = this;
+                _this.getOrderList();
+            },
+            tabItemName: {
+                all: '全部',
+                N: '未接受',
+                Y: '已接受（未出貨）',
+                S: '出貨中',
+                E: '完成訂單（已完成）'
+            },
+            tabBindMethod: function(e) {
+                e.preventDefault();
+                var tabName = ($(this).prop('id')).replace('tab_', '');
+                order.setTable(tabName);
+            },
+            setTabButton: function() {
+                var _this = this;
+                var tabWrap = $('<div class="tab-wrap"></div>');
+                Object.keys(_this.tabItemName).forEach(function(item) {
+                    var button = $('<button id="tab_'+ item +'">' + _this.tabItemName[item] + '</button>');
+                    button.bind('click', _this.tabBindMethod);
+                    tabWrap.append(button);
+                });
+                $(tabWrap).appendTo('#tab');
+            },
+            setOption: function(status) {
+                var goodsStatusOptions = $("<td></td>");
+                var options = (
+                    '<select class="goods-status">' +
+                        '<option value="N">未接受訂單</option>' +
+                        '<option value="Y">已接受訂單</option>' +
+                        '<option value="S">出貨中</option>' +
+                        '<option value="E">完成訂單</option>' +
+                    '</select>'
+                );
+                goodsStatusOptions.append(options);
+
+                $(goodsStatusOptions).find('option').each(function() {
+                    if ($(this).val() === status) {
+                        $(this).attr('selected', true);
+                        return false;
+                    }
+                })
+                return goodsStatusOptions;
+            },
+            setGoods: function(goodsItems) {
+                var goodsList = $("<td></td>");
+                if (!goodsItems.length) {
+                    return goodsList;
+                }
+                goodsItems.forEach(function(item) {
+                    $('<div class="goods-item-list clearfix"><div class="item-name">'+ item.name + "</div><span> x " + item.counts +'</span></div>').appendTo(goodsList)
+                });
+
+                return goodsList;
+            },
+            setOprate: function(status) {
+                var oprate = $('<td></td>');
+                if (status !== 'N' && status !== 'Y') {
+                    return oprate;
+                }
+
+                var btn = $('<button class="pink">訂單取消</button>');
+                $(btn).bind('click', function(e) {
+                    e.preventDefault();
+                    var cancelCheck = confirm('確認取消訂單？ 取消後無法繼續執行後續操作！！');
+                });
+                return oprate.append(btn);
+            },
+            orderData: [],
+            getOrderList: function() {
+                var _this = this;
+                $.ajax({
+                    url:"/api/admin/goods/order/list",
+                    type: "GET",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (!res || !res.data || !Object.keys(res.data).length) {
+                            return;
+                        }
+
+                        _this.orderData = res.data;
+                        _this.setTable();
+                        _this.setTabButton();
+                    }}
+                );
+            },
+            setTable: function(search = null) {
+                var _this = this;
+                $("#oderList").html('');
+                _this.orderData.forEach((list) => {
+                    _this.tr = $("<tr></tr>").appendTo("#oderList");
+                    if (search !== 'all' && search && list.status !== search) {
+                        return;
+                    }
+                    $('#orderListTable thead').find('th').each(function(index, ele) {
+                        var filedName = $(ele).attr('name');
+
+                        if (filedName === 'status') {
+                            $(_this.tr).append(_this.setOption(list[filedName]));
+                            return;
+                        }
+                        if (filedName === 'goods') {
+                            var goodsData = list[filedName];
+                            $(_this.tr).append(_this.setGoods(goodsData));
+                            return;
+                        }
+
+                        if (filedName === 'oprate') {
+                            $(_this.tr).append(_this.setOprate(list.status));
+                            return;
+                        }
+                        if (filedName && list[filedName]) {
+                            $(_this.tr).append('<td>'+ list[filedName] +'</td>');
+                            return;
+                        }
+                        $(_this.tr).append('<td></td>');
+                    });
+                });
+            }
+        }
+        order.init();
+    })(jQuery)
+</script>

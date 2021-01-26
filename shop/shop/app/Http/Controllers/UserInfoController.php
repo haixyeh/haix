@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Validator;
 
 class UserInfoController extends Controller
 {
+    private static $self;
     private $response;
     private $userMethod;
+    private $userStash;
     /**
      * MenuController constructor.
      */
@@ -20,10 +22,29 @@ class UserInfoController extends Controller
         $this->response = $this->normalOutput();
         $this->userMethod = new UsersLoginController();
     }
-    function UserGet($request) {
-        $user = $this->userMethod->UserGet($request);
+    /**
+     * 初始化
+    */
+    public static function instance()
+    {
+        if (!isset(self::$self)) {
+            self::$self = new self();
+        }
+        return self::$self;
+    }
+    public function UserGet($request) {
+        $user;
+        // 防止重複取User資料
+        if (empty($userStash)) {
+            $user = $this->userMethod->UserGet($request);
+            $userStash = $user;
+        } else {
+            $user = $userStash;
+        }
+        
         return $user;
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -43,12 +64,11 @@ class UserInfoController extends Controller
         ]);
     }
     /**
-     * Display the specified resource.
+     * 用戶詳細資料(數據)
      *
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
+    public function showData(Request $request)
     {
         $user = $this->UserGet($request);
         $userInfo = array(
@@ -71,7 +91,17 @@ class UserInfoController extends Controller
             $userInfo['phone'] = $infoTable['phone'];
             $userInfo['email'] = $infoTable['email'];
         }
-        $data = $this->success($userInfo);
+
+        return $userInfo;
+    }
+    /**
+     * 用戶詳細資料
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request)
+    {
+        $data = $this->success($this->showData($request));
 
         return $data;
     }
@@ -119,38 +149,4 @@ class UserInfoController extends Controller
 
         return response()->json($this->response);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    // public function store(Request $request)
-    // {
-    //     //
-    // }
-
-
-    // /**
-    //  * Show the form for editing the specified resource.
-    //  *
-    //  * @param  int  $id
-    //  * @return \Illuminate\Http\Response
-    //  */
-    // public function edit($id)
-    // {
-    //     //
-    // }
-
-    // /**
-    //  * Remove the specified resource from storage.
-    //  *
-    //  * @param  int  $id
-    //  * @return \Illuminate\Http\Response
-    //  */
-    // public function destroy($id)
-    // {
-    //     //
-    // }
 }

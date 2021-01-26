@@ -19,6 +19,7 @@ class Users extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('api_token')->unique();
+            $table->string('level')->default('1');
             $table->timestamps();
         });
     }

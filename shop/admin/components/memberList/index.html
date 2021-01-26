@@ -57,6 +57,7 @@
                 <th>郵件</th>
                 <th>建立日期</th>
                 <th>更新日期</th>
+                <th>層級</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -87,7 +88,9 @@
     </div>
 </div>
 <script>
+    var isONchange = false;
     var member = {
+        stashBeforeLevel: null,
         changePsdId: null,
         changePsdName: '',
         changePsdOpen: function(id, name) {
@@ -139,6 +142,59 @@
             $('.change').on('click', function() {
                 _this.changePsdOpen($(this).data('id'), $(this).data('name'));
             });
+            $('select[name="level"]').on('change', function (e) {
+                if (isONchange){
+                    e.preventDefault();
+                    return;
+                }
+                var levelSelect = $(this);
+                var beforeLevel = levelSelect.data('level');
+                var afterLevel = levelSelect.val();
+                isONchange = true;
+                setTimeout(function() {
+                    if (beforeLevel !== afterLevel) {
+                        var check = confirm('確定更改會員層級？');
+                        var failMethod = function() {
+                            levelSelect.val(beforeLevel);
+                            isONchange = false;
+                        };
+                        var successMethod = function() {
+                            levelSelect.data('level', afterLevel);
+                            isONchange = false;
+                        }
+                        if(check) {
+                            _this.UserChangeLevel(levelSelect.data('id'), afterLevel, successMethod, failMethod);
+                            return;
+                        }
+                        failMethod();
+                    }
+                    isONchange = false;
+                }, 10);
+            });
+        },
+        UserChangeLevel: function(id, level, successMethod, failMethod) {
+            formData = {
+                id: id,
+                level: level
+            }
+            $.ajax({
+                url:"/api/admin/user/level",
+                data: JSON.stringify(formData),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    alert(res.message);
+                    if (res.code !== 200) {
+                        failMethod();
+                        return;
+                    }
+                    successMethod();
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    failMethod();
+                }}
+            );
         },
         // 驗證碼圖片api
         captchImgMethod: function() {
@@ -161,26 +217,36 @@
                     if (res.code !== 200) {
                         alert(res.message);
                     }
-                    if (!res.data || !res.data.length) {
+                    if (!res.data || !res.data.userList) {
                         $('#memberTable').find('tbody').html('');
                         return;
                     }
-                    if (res.data && res.data.length) {
+                    var userList = res.data.userList;
+                    var levelList = res.data.levelList;
+                    var levelOption = [];
+                    levelList.forEach(function(item){
+                        levelOption.push('<option value="'+ item.id +'">'+ item.levelName +'</option>');
+                    });
+                    var levelSelect = '<select name="level">' + levelOption.join('') + '</select>';
+
+                    if (res.data.userList.length) {
                         listDomAll = [];
-                        res.data.forEach(function(item) {
+                        res.data.userList.forEach(function(item, index) {
                             var listDom =
-                                "<tr>"+ 
-                                "<td>" +item.name +"</td>"+
-                                "<td>" +item.email +"</td>"+
-                                "<td>" +item.created_at +"</td>"+
-                                "<td>" +item.updated_at +"</td>"+
-                                "<td>" +_this.commonBtn(item.id, item.name)+ "</td>"+
+                                '<tr class="tr-'+index+'">'+ 
+                                    "<td>" +item.name +"</td>"+
+                                    "<td>" +item.email +"</td>"+
+                                    "<td>" +item.created_at +"</td>"+
+                                    "<td>" +item.updated_at +"</td>"+
+                                    '<td class="level-'+ item.id +'">' + levelSelect +"</td>"+
+                                    "<td>" +_this.commonBtn(item.id, item.name)+ "</td>"+
                                 "</tr>";
 
-                                listDomAll.push(listDom);
+                            $('#memberTable tbody').append(listDom);
+                            $('#memberTable tbody .tr-' + index + ' select[name="level"]').val(item.level).data('level', item.level).data('id', item.id);
                         });
 
-                        $('#memberTable').find('tbody').html(listDomAll);
+                        // $('#memberTable').find('tbody').html(listDomAll);
                         _this.tableCreatAfter();
                     }
                 }

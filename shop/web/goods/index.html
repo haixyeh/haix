@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開幕優惠期間～歡迎選購</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <link rel="stylesheet" href="/web/css/slick.css">
+    <script src="/web/js/jquery.min.js"></script>
+    <script src="/web/js/slick.min.js"></script>
+</head>
+<style>
+    * {
+        outline: none;
+    }
+    #header .nav-wrap {
+        margin-bottom: 3px;
+    }
+    .goods-wrap {
+        position: relative;
+        margin: 0 auto;
+        padding: 20px 20px 20px 561px;
+        box-sizing: border-box;
+        max-width: 1260px;
+        /* min-height: 536px; */
+        background: #FFF;
+    }
+    .left-box,
+    .right-box {
+        font-family: Arial,Helvetica,LiHei,Microsoft JhengHei,PMingLiU,微軟正黑體,新細明體,sans-serif;
+    }
+    .left-box {
+        position: absolute;
+        left: 0;
+        top: 0;
+        min-width: 520px;
+    }
+    .right-box {
+        float: left;
+    }
+    .slider-img-wrap {
+        border-radius: 5px;
+        box-sizing: border-box;
+        padding: 28px;
+        width: 541px;
+    }
+    .slick-slider {
+        margin-bottom: 20px;
+    }
+    .slider-img-wrap div {
+        /* margin-right: 20px; */
+    }
+    .slider-nav {
+        /* padding: 20px; */
+    }
+    .slider-nav img {
+        border: 1px solid #EEE;
+    }
+    .goods-title {
+        margin: 0px 0px 15px 0px;
+        padding: 0px;
+        max-height: 50px;
+        overflow: hidden;
+        font: bold 18px/25px Helvetica;
+        color: #000;
+    }
+    .info-data {
+        margin: 0 0 20px;
+        color: #7B8B8B;
+    }
+    .price-wrap {
+        margin-bottom: 10px;
+        border-radius: 5px;
+        padding: 20px 10px;
+        background: #D6D4D4;
+    }
+    .price-bottom {
+        margin-top: 20px;
+        font-size: 16px;
+    }
+    .price-sign {
+        color: #F00;
+    }
+    .price-num {
+        color: #F00;
+        font-size: 20px;
+    }
+    .list-wrap {
+        margin: 10px;
+    }
+    .list-input {
+        margin-top: 10px;
+    }
+    input {
+        outline: none;
+    }
+</style>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="goods-wrap clearfix">
+        <div class="left-box">
+            <div class="slider-img-wrap">
+                <div id="sliderFor" class="slider slider-for slick-slider"></div>
+                <div id="sliderNav" class="slider-nav" role="toolbar"></div>
+            </div>
+        </div>
+        <div id="rightBox" class="right-box">
+            <h3 id="title" class="goods-title">Apple iPhone 12  mini 128G 智慧型 5G 手機</h3>
+            <div id="info" class="info-data"></div>
+            <div class="price-wrap">
+                <div class="price-bottom">
+                    <span class="price-name">網路價：</span>
+                    <span class="price-sign">$</span>
+                    <span id="priceNum" class="price-num"> 25,500 </span>
+                </div>
+            </div>
+            <div class="list-wrap">
+                <div class="list-input">配送方式: <input type="radio" id="sendWay" checked="checked"><label for="sendWay" >貨到付款</label></div>
+                <div class="list-input">數量: <input type="number" name="" id="buyCount"></div>
+            </div>
+            <div class="btn-wrap">
+                <button id="addCar">加入購物車</button>
+                <button>直接購買</button>
+            </div>
+        </div>
+    </div>
+    <script>
+         $(document).ready(function(){
+            var userLoginType = 'account';
+            var goodsPage = {
+                goodsAddCar: {
+                    id: null,
+                    count: 0
+                },
+                goodsSetHtml: function(data) {
+                    var _this = this;
+                    $("#title").text(data.name);
+                    $("#info").text(data.info);
+                    $("#priceNum").text(data.amount);
+                    var images = JSON.parse(data.images);
+                    images.forEach(function(img) {
+                        $('#sliderFor').append(
+                            '<div><img src="'+ img +'" width="485" height="300"></div>'
+                        )
+                        if(images.length > 1) {
+                            $("#sliderNav").append(
+                                '<div><img src="'+ img +'" width="100" height="100"></div>'
+                            );
+                        }
+                    });
+                    if(images.length > 1) {
+                        $('#sliderFor').slick({
+                            slidesToShow: 1,
+                            slidesToScroll: 1,
+                            arrows: false,
+                            fade: true,
+                            asNavFor: '#sliderNav'
+                        });
+
+                        $('#sliderNav').slick({
+                            slidesToShow: +images.length <= 5 ? Math.floor((+images.length + 2) / 2) : 5,
+                            slidesToScroll: 1,
+                            asNavFor: '#sliderFor',
+                            dots: false,
+                            centerMode: true,
+                            focusOnSelect: true
+                        });
+                    }
+                    var goodsWrap = $('.goods-wrap').height();
+                    var leftBox = $('.left-box').height();
+                    if (leftBox > goodsWrap) {
+                        $('.goods-wrap').height(leftBox);
+                    }
+
+                    _this.goodsAddCar['id'] = data.id;
+                    $('#buyCount').on('change', function() {
+                        _this.goodsAddCar['count'] = $(this).val();
+                    });
+                    $('#addCar').on('click', function() {
+                        $.ajax({
+                            url:"/api/haix/goods/car/" + _this.goodsAddCar.id,
+                            type: "POST",
+                            data: JSON.stringify({count: _this.goodsAddCar.count}),
+                            dataType: "json",
+                            contentType: "application/json;charset=utf-8",
+                            success:function(res){
+                                if (res.code !== 200) {
+                                    alert(res.message);
+                                    return;
+                                }
+                                $('#openCar').click();
+                            }}
+                        );
+                    });
+                },
+                getParameterByName: function(name, url = window.location.href) {
+                    name = name.replace(/[\[\]]/g, '\\$&');
+                    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                        results = regex.exec(url);
+                    if (!results) return null;
+                    if (!results[2]) return '';
+                    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+                },
+                init: function() {
+                    var _this = this;
+                    var id = _this.getParameterByName('id');
+                    console.log(id, 'id');
+                    $.ajax({
+                        url:"/api/haix/goods/single/" + id,
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(res){
+                            _this.goodsSetHtml(res.data);
+                        }}
+                    );
+                }
+            };
+
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+                goodsPage.init();
+            });
+         });
+    </script>
+</body>
+</html>

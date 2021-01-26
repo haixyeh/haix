@@ -8,45 +8,199 @@
     <script src="/web/js/jquery.min.js"></script>
 </head>
 <style>
+    #header .nav-wrap {
+        margin-bottom: 3px;
+    }
     .shopping-wrap {
+        background-color: #F7F7F7;
+    }
+    .type-wrap {
         margin: 0 auto;
+        background-color: #FFF;
         max-width: 900px;
-        background: #EEE;
+        box-shadow: 0px 2px 8px 0px #bdbcbc;
+    }
+    .tab {
+        float: left;
+        margin: 0 1% 2px;
+        padding: 13px;
+        border-radius: 99em;
+        width: 45%;
+        overflow: hidden;
+        text-decoration: none;
+        color: #A06235;
+    }
+    .tab:hover {
+        color: #C5936E;
+    }
+    .type-list-wrap {
+        position: relative;
+        margin: 30px auto;
+        max-width: 900px;
+    }
+    .more-icon {
+        position: absolute;
+        right: 0;
+        top: -2px;
+        font-family: 'KulminoituvaRegular';
+        color: #FF0E0E;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .more-icon:hover {
+        color: #F95A5A;
+    }
+    .type-title {
+        margin-bottom: 3px;
+    }
+    .card-wrap {
+        float: left;
+        background-color: #FFF;
+        border: 1px dotted #e1e1e1;
+        border-left: 0;
+        box-sizing: border-box;
+        padding: 28px;
+        width: 225px;
+        height: 290px;
+    }
+    .card-wrap:last-of-type {
+        border-right: 1px dotted #e1e1e1;
+    }
+    .card-wrap:last-of-type {
+        border-right: 1px dotted #e1e1e1;
+    }
+    .card-right {
+        float: left;
+    }
+    .card-wrap img {
+        box-shadow: #000;
+    }
+    .card-list {
+        display: block;
+        font-family: Arial,Helvetica,LiHei,Microsoft JhengHei,PMingLiU,微軟正黑體,新細明體,sans-serif;
+        color: #5d5d5d;
+        line-height: 1.4;
+    }
+    .card-list.name {
+        height: 43px;
+        overflow: hidden;
+    }
+    .card-list.red {
+        color: #CC1E05;
     }
 </style>
 <body style="display: none;">
     <div id="header"></div>
     <div class="shopping-wrap">
-        <h3 class="title">所有商品</h3>
+        <div class="type-wrap clearfix">
+            <div id="setAllType"></div>
+        </div>
+        <div class="select-wrap">
+            <div id="selectType" class="clearfix"></div>
+        </div>
     </div>
     <script>
          $(document).ready(function(){
             var userLoginType = 'account';
+            var typeListConfig = {
+                onlyshow: null,
+                countlimt: 4
+            };
+            var goodsListData = {};
             $("#header").load("/web/header.html", function() {
                 $('body').show();
             });
-            // 送出修改
-            $("#submit").click(function(){
-                var inputFiled = $('.info-wrap-user').find('.input-wrap input');
-                var dataEdit = {};
-                $.each(inputFiled, function(item) {
-                    var itemDom = inputFiled[item];
-                    dataEdit[itemDom.id] = itemDom.value;
-                });
-                $.ajax({
-                    url:"/api/haix/userInfo/edit",
-                    data: JSON.stringify(dataEdit),
-                    type: "POST",
-                    dataType: "json",
-                    contentType: "application/json;charset=utf-8",
-                    success:function(result){
-                        alert(result.message || 'error');
-                        if (result.code === 200) {
-                            window.location = '/web';
+
+            var setGoodsTable = function() {
+                if (Object.keys(goodsListData).length === 0) {
+                    return;
+                }
+                var data = goodsListData;
+                var categoriesSimple = data.categoriesSimple;
+                var goodsTypeMap = data.goodsTypeMap;
+                var goodsList = data.goodsList;
+
+                // 重置
+                $('#setAllType').html('');
+                $('#selectType').html('');
+                Object.keys(categoriesSimple).forEach(function(item, index){
+                    $('<a/>', 
+                        {
+                            "href": '#tab-' + item,
+                            "class": 'tab',
+                            "title": categoriesSimple[item],
+                            "text": categoriesSimple[item]
                         }
-                    }}
-                );
-            });
+                    ).appendTo('#setAllType');
+                });
+
+                Object.keys(goodsTypeMap).forEach(function(item) {
+                    if (typeListConfig.onlyshow && typeListConfig.onlyshow !== +item) {
+                        return;
+                    }
+                    $('<div/>', 
+                        {
+                            "id": 'tab-' + item,
+                            "class": 'type-list-wrap clearfix',
+                        }
+                    ).appendTo('#selectType');
+                    $('#tab-'+ item).append('<div class="type-title">'+ categoriesSimple[item] + '</div>');
+                    if(goodsTypeMap[item].length > typeListConfig.countlimt) {
+                        $('#tab-'+ item).append('<a class="more-icon" data-item-index="'+ item +'">More</a>');
+                    }
+                    goodsTypeMap[item].forEach(function(list, index) {
+                        if (typeListConfig.countlimt && index > (typeListConfig.countlimt -1)) {
+                            return;
+                        }
+                        var goods = {};
+                        goodsList.some(function(goodsItem) {
+                            if (goodsItem.id === +list) {
+                                goods = goodsItem;
+                                return true;
+                            }
+                        });
+                        var goodsImg = JSON.parse(goods.images)[0];
+                    
+                        $('#tab-'+ item).append(
+                            '<a class="card-wrap" href="/web/goods?id='+ goods.id +'">'+
+                                '<img src="'+ goodsImg +'" width="168"" height="168"/>'+
+                                '<div class="card-right">'+
+                                    '<span class="card-list name">'+ goods.name +'</span>'+
+                                    '<span class="card-list red">$'+ goods.amount +'</span>'+
+                                '</div>'+
+                            '</a>'
+                        );
+                    });
+                });
+                $('.tab').on('click', function() {
+                    typeListConfig.onlyshow = null;
+                    typeListConfig.countlimt = 4;
+                    setGoodsTable();
+                });
+                $('.more-icon').on('click', function() {
+                    typeListConfig.onlyshow = $(this).data('item-index');
+                    typeListConfig.countlimt = null;
+                    setGoodsTable();
+                });
+            }
+            $.ajax({
+                url:"/api/haix/goods/list",
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    if (res.code !== 200) {
+                        alert(res.message);
+                        return;
+                    }
+                    if (!res.data || !res.data.goodsList) {
+                        console.error('no have goodsList');
+                        return;
+                    }
+                    goodsListData = res.data;
+                    setGoodsTable();
+                }}
+            );
          });
     </script>
 </body>

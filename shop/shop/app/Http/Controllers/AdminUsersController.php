@@ -6,6 +6,7 @@ use App\AdminUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cookie;
 
 class AdminUsersController extends Controller
 {

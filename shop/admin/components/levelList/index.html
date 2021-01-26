@@ -1,0 +1,228 @@
+<style>
+    .setting-position {
+        position: relative;
+    }
+    .setting-wrap {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid rgb(163, 163, 163);
+        box-sizing: border-box;
+        background:#FFF;
+        width: 500px;
+        /* height: 500px; */
+    }
+    .setting-position {
+        display: inline-block;
+        vertical-align: top;
+    }
+    .add-level {
+        margin-bottom: 20px;
+    }
+    .btn-wrap {
+        text-align: right;
+    }
+</style>
+<div>
+    <h3 class="title">等級管理及優惠設定</h3>
+    <button id="addLevel" class="add-level gray">新增層級設定</button>
+    <div class="setting-position">
+        <div class="setting-wrap">
+            <form id="levelForm">
+                <div class="input-wrap">
+                    <label for="">等級名稱</label>
+                    <input type="text" name="level-name">
+                </div>
+                <div class="input-wrap">
+                    <label for="">是否設定優惠</label>
+                    <span>是</span>
+                    <input type="radio" name="offer" value="Y" checked>
+                    <span>否</span>
+                    <input type="radio" name="offer" value="N">
+                </div>
+                <div class="input-wrap">
+                    <label for="">優惠種類</label>
+                    <select name="offer-type" id="offerType" value="A">
+                        <option value="A">滿額折扣送</option>
+                        <option value="B">固定折扣％數</option>
+                        <!-- <option value="C">滿額折扣％數</option> -->
+                    </select>
+                </div>
+                <div class="input-wrap type-a">
+                    <label for="">單筆滿額</label>
+                    <input type="number" name="full">
+                </div>
+                <div class="input-wrap type-a">
+                    <label for="">折扣金額</label>
+                    <input type="number" name="discount">
+                </div>
+                <div class="input-wrap type-b" style="display: none;">
+                    <label for="">折扣%數</label>
+                    <input type="number" name="present">
+                </div>
+                <div class="btn-wrap">
+                    <button id="close" class="close-btn gray">關閉</button>
+                    <button id="submit" class="close-btn pink">送出</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <table id="levelTable">
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>等級名稱</th>
+                <th>優惠方式</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+    (function($){
+        // 轉小駝峰
+        function transformStr(str){
+            var re=/-(\w)/g;
+            return str.replace(re,function ($0,$1){
+                return $1.toUpperCase();
+            });
+        }
+        // 轉 -
+        function toDash(name) {
+            return name.replace(/([A-Z])/g,"-$1").toLowerCase();
+        }
+        var offerTypeVal = 'A';
+        var levelList = {
+            offerType: {
+                'A': '滿額折扣送',
+                'B': '固定折扣％數'
+            },
+            offerTextMethod: function(item) {
+                var _this = this;
+                var offerText = '';
+                switch (item.offerType) {
+                    case 'A':
+                        offerText = _this.offerType[item.offerType] + 
+                            '(滿額＄' + item.full + ', 折扣$' + item.discount +')';
+                        break;
+                    case 'B':
+                        offerText = _this.offerType[item.offerType] + '(折扣'+ item.present +'%)'
+                        break;
+                    default:
+                        offerText = '無優惠';
+                        break;
+                }
+                // console.log(offerText, 'offerText');
+                return offerText;
+            },
+            init: function() {
+                var _this = this;
+                $.ajax({
+                    url:"/api/admin/goods/level/list",
+                    type: "GET",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert(res.message);
+                            return;
+                        }
+                        // console.log(res);
+                        var contentTR = [];
+                        res.data.forEach(function(item) {
+                            contentTR.push(
+                                '<tr>'+
+                                    '<td>'+ item.id +'</td>'+
+                                    '<td>'+ item.levelName +'</td>'+
+                                    '<td>'+ _this.offerTextMethod(item) +'</td>'+
+                                '</tr>'
+                            )
+                        });
+                        $('#levelTable tbody').append(contentTR);
+                    }}
+                );
+            }
+        }
+        // 設定
+        levelList.init();
+
+        $("#addLevel").on('click', function() {
+            $('.setting-wrap').toggle();
+        });
+        $("#close").on('click', function(e) {
+            e.preventDefault();
+            $('.setting-wrap').hide();
+        });
+        $("#levelForm #offerType").on('change', function() {
+            // console.log($(this).val())
+            if (offerTypeVal === $(this).val()) {
+                return;
+            }
+            $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).hide();
+            $("#levelForm .type-" + ($(this).val()).toLocaleLowerCase()).show();
+            offerTypeVal = $(this).val();
+        });
+        $('#levelForm input[name="offer"]').on('change', function() {
+            var offerStatus= $(this).val();
+            if (offerStatus === 'Y') {
+                $("#offerType").parent('.input-wrap').show();
+                $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).show();
+            }
+            if (offerStatus === 'N') {
+                $("#offerType").parent('.input-wrap').hide();
+                $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).hide();
+            }
+        })
+        $('#submit').on('click', function(e) {
+            e.preventDefault();
+            var formData = {};
+            var hasError = false;
+            $('#levelForm').find('input, select, textarea').each(function(index, inputDom) {
+                if (hasError) {
+                    return false;
+                }
+                if ($(inputDom).is(":hidden")) {
+                    return;
+                }
+                var inputType = $(inputDom).attr('type');
+                var inputName = $(inputDom).attr('name');
+                var inputValue = $(inputDom).val();
+
+                if (!inputValue) {
+                    var filedName = $(inputDom).siblings('label').text();
+                    var errorMsg = '請先輸入'+ filedName;
+                    hasError = true;
+                    alert(errorMsg);
+                    return;
+                }
+                if (inputType === 'radio') {
+                    if (!$(inputDom).is(":checked")) return;
+                }
+                if (!inputName) {
+                    console.error('須設置input name');
+                }
+                var postName = transformStr(inputName);
+                formData[postName] = inputValue;
+            });
+            console.log(formData, 'formData');
+
+            $.ajax({
+                url:"/api/admin/goods/level/add",
+                data: JSON.stringify(formData),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    alert(res.message);
+                    if (res.code !== 200) {
+                        return;
+                    }
+                    console.log(res);
+                }}
+            );
+        });
+    })(jQuery)
+</script>

@@ -37,19 +37,32 @@ class CategoriesController extends Controller
         return $data;
     }
     /**
+     * fror Data查詢所有商品分類顯示 id & name
+     * @return response->json()
+     */
+    public function showAllData() {
+        $typeAll = Categories::get()->all();
+        // { id: name} 輸出格式
+        $typeAll2 = Categories::all()-> pluck(
+            'name',
+            'id'
+        );
+        $data = array(
+            'simple'=>$typeAll2->all(),
+            'allinfo'=>$typeAll
+        );
+
+        return $data;
+    }
+    /**
      * 查詢所有商品分類顯示 id & name
      * @return response->json()
      */
     public function showAll() {
-        $usersAll = Categories::get()->all();
-        $usersAll2 = Categories::all()-> pluck(
-            'name',
-            'id'
-        ); // { id: name}
 
-        $data = $this->success($usersAll2->all());
+        $data = $this->showAllData();
 
-        return $data;
+        return $this->success($data['simple']);
     }
      /**
      * Display the specified resource.

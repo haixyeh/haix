@@ -108,6 +108,13 @@
             start: {
                 method: [
                     { 
+                        key: 'edit', btnName: '編輯',
+                        clickEvent: function(e, id) {
+                            location.href = '/admin/#/upCommodity?id=' + id;
+                            location.reload();
+                        }
+                    },
+                    { 
                         key: 'down', btnName: '下架',
                         clickEvent: function(e, id) {
                             goods.clickMethod.down(e, id);
@@ -117,7 +124,13 @@
             },
             unStart: {
                 method: [
-                    // { key: 'edit', btnName: '編輯', clickEvent: function() {} },
+                    {
+                        key: 'edit', btnName: '編輯',
+                        clickEvent: function(e, id) {
+                            location.href = '/admin/#/upCommodity?id=' + id;
+                            location.reload();
+                        }
+                    },
                     { key: 'delete', btnName: '刪除',
                         clickEvent: function(e, id) {
                             goods.clickMethod.delete(e, id);
@@ -127,7 +140,13 @@
             },
             over: {
                 method: [
-                    // { key: 'edit', btnName: '編輯', clickEvent: function() {} },
+                    { 
+                        key: 'edit', btnName: '編輯',
+                        clickEvent: function(e, id) {
+                            location.href = '/admin/#/upCommodity?id=' + id;
+                            location.reload();
+                        }
+                    },
                     { key: 'delete', btnName: '刪除',
                         clickEvent: function(e, id) {
                             goods.clickMethod.delete(e, id);
@@ -196,8 +215,9 @@
                                     var btnName = list.btnName;
                                     var btnMethod = list.key;
                                     var clickEvent = list.clickEvent;
+                                    var btnColor = btnMethod === 'edit' ? 'gray' : 'pink';
                                     var btn = (
-                                        '<button class="main-btn button pink minsize" data-method="'+ btnMethod +'" data-id="'+ item.id +'">'+
+                                        '<button class="main-btn button '+ btnColor +' minsize" data-method="'+ btnMethod +'" data-id="'+ item.id +'">'+
                                             btnName +
                                         '</button>'
                                     );

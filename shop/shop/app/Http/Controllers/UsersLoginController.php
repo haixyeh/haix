@@ -6,6 +6,8 @@ use App\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use RedisServer;
+
 
 class UsersLoginController extends Controller
 {
@@ -75,14 +77,16 @@ class UsersLoginController extends Controller
     // init 基本資料
     public function UserInit (Request $request)
     {
+        // RedisServer::set('name', 'guest');
         $session = request()->cookie('SESSION');
         $reslut = array(
             'is_login'=> 'N',
             'user' => '',
-            'menu' => array()
+            'menu' => array(),
         );
         if ($session) {
             $users = $this->UserGet($request);
+            
             if (!$users) {
                 $reslut['is_login'] = 'N';
             }
@@ -97,11 +101,11 @@ class UsersLoginController extends Controller
                 'name' => 'home',
                 'open' => 'Y'
             ),
-            array(
-                'link' => '/web/shopping',
-                'name' => 'shopping',
-                'open' => 'Y'
-            ),
+            // array(
+            //     'link' => '/web/shopping',
+            //     'name' => 'shopping',
+            //     'open' => 'Y'
+            // ),
             array(
                 'link' => '/web/member',
                 'name' => 'member',
@@ -109,6 +113,7 @@ class UsersLoginController extends Controller
             ),
         );
         $this->response['data'] = $reslut;
+        RedisServer::set('name', json_encode($reslut));
 
         return response()->json($this->response);
     }

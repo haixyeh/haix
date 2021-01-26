@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\LevelController;
 
 class UsersController extends Controller
 {
@@ -61,7 +62,7 @@ class UsersController extends Controller
             'name' =>$data['name'],
             'email' =>$data['email'],
             'password' => $data['password'],
-            'api_token' => $api_token,
+            'api_token' => $api_token
         ]);
         
         if ($Create) {
@@ -83,7 +84,11 @@ class UsersController extends Controller
     // 查詢所有會員
     public function show() {
         $usersAll = Users::get()->all();
-        $data = $this->success($usersAll);
+        $result = array(
+            'userList'=> $usersAll,
+            'levelList'=> LevelController::instance()->getAllLevel()
+        );
+        $data = $this->success($result);
 
         return $data;
     }
@@ -98,7 +103,7 @@ class UsersController extends Controller
 
         Auth::user()->update($request->all());
 
-        echo  '資料修改成功，以下爲修改結果';
+        echo '資料修改成功，以下爲修改結果';
         return  $request->all();
     }
 
@@ -133,6 +138,35 @@ class UsersController extends Controller
         };
         $this->response['code'] = 2003;
         $this->response['message'] = '會員:'. $data['account'] .',密碼更改失敗';
+        return response()->json($this->response);
+    }
+
+    // 修改層級
+    public function updateLevel(Request $request) {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'id' => ['required', 'number'],
+            'level' => ['required', 'string'],
+        ],[
+            'id.required' => '列表key值有誤',
+            'level.required' => '層級資料有誤',
+        ]);
+
+        $users = Users::where([
+            'id' => $data['id'],
+        ]);
+        if (!$users) {
+            $this->response['code'] = 2002;
+            $this->response['message'] = '無此會員帳號';
+            return response()->json($this->response);
+        }
+        // 更新api token 使客端登出
+        if ($users->update(['level' => $data['level'], 'api_token'=> Str::random(10)])) {
+            $this->response['message'] = '會員:'. $users->first()['name'].',層級更改成功';
+            return response()->json($this->response);
+        };
+        $this->response['code'] = 2003;
+        $this->response['message'] = '會員:'. $users->first()['name'] .',層級更改失敗';
         return response()->json($this->response);
     }
     // 刪除
