@@ -20,6 +20,7 @@ class Users extends Migration
             $table->string('password');
             $table->string('api_token')->unique();
             $table->string('level')->default('1');
+            $table->integer('cost')->default(0);
             $table->timestamps();
         });
     }

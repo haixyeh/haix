@@ -66,8 +66,7 @@ class Handler extends ExceptionHandler
             }
 
         }
-        // var_dump($result);
-        // exit();
+
         return response()->json($result);
         // return parent::render($request, $exception);
     }

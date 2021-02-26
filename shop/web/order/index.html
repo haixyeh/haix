@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【黑司生活購物網】</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <link rel="stylesheet" href="/web/css/pop.css">
+    <link rel="stylesheet" href="/web/css/sweetalert.css">
+    <script src="/web/js/jquery.min.js"></script>
+    <script src="/web/js/tabel.js"></script>
+    <script src="/web/js/sweetalert-dev.js"></script>
+</head>
+<style>
+    #header .nav-wrap {
+        margin-bottom: 3px;
+    }
+    .order-wrap {
+        background-color: #F7F7F7;
+        max-width: 1000px;
+        margin: 20px auto;
+    }
+    /* table */
+    table.order-list-table {
+        font-family:"Trebuchet MS", Arial, Helvetica, sans-serif; 
+        width:100%; 
+        border-collapse:collapse; 
+    }
+    table.order-list-table {
+        font-family: verdana,arial,sans-serif;
+        font-size: 15px;
+        color:#333;
+        border-width: 1px;
+        border-color: #666;
+        border-collapse: collapse;
+    }
+    table.order-list-table th {
+        padding: 8px;
+        border: 1px solid #667;
+        background-color: #DEDEDE;
+    }
+    table.order-list-table td {
+        padding: 8px;
+        border: 1px solid #666;
+        background-color: #FFF;
+        vertical-align: middle;
+    }
+    tr.not-has {
+        text-decoration: line-through;
+    }
+    .order-list-table {
+        margin-top: 20px;
+    }
+    .red-tip {
+        display: inline-block;
+        color: rgb(247, 77, 77);
+        font-size: 12px;
+    }
+    .red-tip::before {
+        display: inline;
+        content: "( ";
+        font-size: 14px;
+    }
+    .red-tip::after {
+        display: inline;
+        content: " )";
+        font-size: 14px;
+    }
+    .fz-14 {
+        font-size: 14px;
+    }
+    .name-list {
+        display: inline-block;
+        vertical-align: middle;
+        width: 40%;
+        height: auto;
+    }
+    .name-amount,
+    .name-count {
+        display: inline-block;
+        vertical-align: middle;
+        padding: 1%;
+        width: 15%;
+    }
+    .name-count input {
+        width: 40%;
+        box-sizing: border-box;
+    }
+    .name-list-last {
+        display: inline-block;
+        vertical-align: middle;
+        width: 25%;
+        text-align: right;
+    }
+    .content-tr {
+        border: 1px solid #EEE;
+        padding: 2%;
+    }
+    #returnGoodsTip {
+        display: inline-block;
+        margin-left: 15px;
+        font-size: 14px;
+    }
+    .order-list-table .td-memo p {
+        line-height: 20px;
+    }
+    .order-list-table .td-memo span {
+        color: #7D9A9E;
+    }
+</style>
+<body style="display: none;">
+    <div id="header"></div>
+    <div class="order-wrap">
+        訂單項目
+        <div class="red-tip">確認訂單後無法修改訂單, 已確認訂單若預修改請聯繫客服</div>
+        <div id="returnGoodsTip"></div>
+        <table id="orderList" class="order-list-table">
+            <thead>
+                <tr></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script src="/web/js/pop.js"></script>
+    <script>
+         $(document).ready(function(){
+            $("#header").load("/web/header.html", function() {
+                $('body').show();
+                oderList.init();
+            });
+            $("#returnGoodsTip").load("/web/order/returnGoods.html", function() {
+                $('#returnGoodsTip').show();
+            });
+
+            var oderList = {
+                orderData: [],
+                statusList: {
+                    'N': '待商家確認訂單',
+                    'Y': '已確認訂單',
+                    'S': '出貨中',
+                    'E': '訂單已完成',
+                    'R': '退貨申請中',
+                    'T': '待確認退貨商品',
+                    'F': '退貨完成'
+                },
+                setEditOrView: function(trList, setConfig) {
+                    var isEdit = setConfig.isEdit;
+                    var goods = $.extend(true, [],trList.goods);    
+                    var currentProms = JSON.parse(trList.currentProms);
+                    function promsTextMap() {
+                        var promsText = $('<div class="red-tip fz-14">此筆訂單優惠條件, </div>');
+                        switch (currentProms.offerType) {
+                            case 'A':
+                                $(promsText).append('滿額：' + currentProms.full + ', 贈送' + currentProms.discount);
+                                break;
+                            case 'B':
+                                $(promsText).append('折扣:' + currentProms + '%');
+                                break;
+                            default:
+                                $(promsText).text('無優惠');
+                                break;
+                        }
+
+                        return promsText;
+                    }
+                    var promsText = promsTextMap();
+
+                    var content = $('<div class="content-wrap"></div>');
+                    content.append('<div class="red-tip">消費修改為當下等級設定優惠, 若消費金額更改僅以當下購買等級給予優惠;若不足優惠條件, 則取消優惠金額</div>');
+
+                    goods.forEach(function(list, index) {
+                        var isDisabled = isEdit ? null :'disabled';
+                        var contentTr = $('<div class="content-tr clearfix" data-id="'+ list.id +'"></div>');
+                        var listName = $('<div class="name-list"> 品項: '+ list.name +'</div>');
+                        var listCount = $('<div class="name-count"> 數量：</div>');
+                        var listCountInput = $('<input value="'+ list.counts +'" '+ isDisabled +' />');
+                        var listAmount = $('<div class="name-amount"> 單筆金額：</div>');
+                        var listAmountInput = $('<div>$'+ list.amount +'</div>');
+                        var listTotal = $('<div class="name-list-last"> 品項剩餘數量: '+ (list.total) +'</div>');
+
+                        contentTr.append(listName).append(listCount).append(listAmount).append(listTotal);
+                        listCount.append(listCountInput);
+                        listAmount.append(listAmountInput);
+                        contentTr.appendTo(content);
+
+                        // 綁訂input輸入狀態
+                        $(listCountInput).bind('input', function() {
+                            var value = $(this).val() ? +$(this).val() : 0;
+                            var realTotal = list.total + trList.goods[index]['counts'];
+
+                            if (value > (list.total + trList.goods[index]['counts'])) {
+                                alert('貨品數量不足');
+                                $(this).val(goods[index]['counts']);
+                                return;
+                            }
+
+                            $(listTotal).text("品項剩餘數量:" + (realTotal - value));
+                            goods[index]['counts'] = value;
+                        });
+                    });
+
+                    content.append(promsText);
+                    content.append('<br>');
+                    if (!isEdit) {
+                        return content;
+                    }
+                    var fixBtn = $('<button class="button gray">修改</button>');
+                    fixBtn.appendTo(content);
+
+                    $(fixBtn).bind('click', function(e) {
+                        e.preventDefault();
+                        var newGoods = [];
+                        goods.forEach(function(item) {
+                            if (item.counts > 0) {
+                                newGoods.push({
+                                    count: item.counts,
+                                    id: item.id
+                                });
+                            };
+                        });
+
+                        if (newGoods.length <= 0) {
+                            alert('若未設定貨品, 請直接取消訂單');
+                            return;
+                        }
+
+                        var postData = {
+                            id: trList.id,
+                            goods: JSON.stringify(newGoods)
+                        };
+                        $.ajax({
+                            url:"/api/haix/goods/order/fix/goods",
+                            type: "POST",
+                            data: JSON.stringify(postData),
+                            dataType: "json",
+                            contentType: "application/json;charset=utf-8",
+                            success:function(res){
+                                if (res.code !== 200) {
+                                    alert(res.message);
+                                    $(input).remove();
+                                    return;
+                                }
+                                // succse
+                                location.reload();
+                            }}
+                        );
+                    });
+                    return content;
+                },
+                setTableMethod: function() {
+                    var _this = this;
+                    setTable.call(
+                        $('#orderList'),
+                        {
+                            tableData: _this.orderData,
+                            field: {
+                                'created_at': '訂單日期',
+                                'orderNumber': '訂單號', 
+                                'name': '收貨人', 
+                                'phone': '聯絡電話',
+                                'address': '地址', 
+                                'totalAmount': '消費金額',
+                                'status': '訂單狀態',
+                                'memo': '訂單備註',
+                                'oprate': '操作'
+                            },
+                            setTrData: {
+                                id: 'id',
+                                status: 'status'
+                            },
+                            tdContent: {
+                                'oprate': function(tr, text, trList){
+                                    var status = trList.status;
+                                    if (trList.cancelOrder === 'Y') {
+                                        $(tr).addClass('not-has');
+                                        return null;
+                                    }
+
+                                    // 取消訂單
+                                    var cancelButton = (status === 'N') ? $('<button>取消訂單</buttton>') : null;
+                                    if(cancelButton) {
+                                        $(cancelButton).bind('click', function(e) {
+                                            var btnSelf = this;
+                                            e.preventDefault();
+                                            var cancelCheck = confirm('確認取消訂單？ 取消後無法繼續執行後續操作！！');
+                                            if (!cancelCheck) {
+                                                return;
+                                            }
+                                            $.ajax({
+                                                url:"/api/haix/goods/order/" + trList.id,
+                                                type: "PUT",
+                                                success:function(res){
+                                                    if (res.code !== 200) {
+                                                        alert(res.message);
+                                                    }
+                                                    location.reload();
+                                                }}
+                                            );
+                                        });
+                                    }
+
+                                    // 編輯訂單
+                                    var editButton = status === 'N' ? $('<button>編輯訂單</button>') : null;
+                                    if (editButton) {
+                                        editButton.bind('click', function(e) {
+                                            e.preventDefault();
+                                            var content = _this.setEditOrView(trList, {'isEdit': true});
+
+                                            // 設定內容
+                                            setPopContent(content);
+                                            // 開啟
+                                            openPop();
+                                        })
+                                    }
+
+                                     // 查看訂單內容
+                                     var editButton = status === 'E' ? $('<button>訂單內容</button>') : null;
+                                    if (editButton) {
+                                        editButton.bind('click', function(e) {
+                                            e.preventDefault();
+                                            var content = _this.setEditOrView(trList, {'isEdit': false});
+
+                                            // 設定內容
+                                            setPopContent(content);
+                                            // 開啟
+                                            openPop();
+                                        })
+                                    }
+
+                                    // 退貨申請
+                                    var backOrderBtn = status === 'E' ? $('<button>退貨申請</button>') : null;
+                                    if (backOrderBtn) {
+                                        backOrderBtn.bind('click', function(e) {
+                                            e.preventDefault();
+                                            var onlyAllBack = false;
+
+                                            // 僅能申請整筆退貨
+                                            if (trList.goods.length < 2 && trList.goods[0].counts < 2) {
+                                                onlyAllBack = true;
+                                            }
+
+                                            if (onlyAllBack) {
+                                                var reason = '';
+
+                                                swal({
+                                                    title: "此筆訂單僅有單項項目, 確認是否整筆申請退貨？",
+                                                    text: "輸入退貨原因",
+                                                    type: "input",
+                                                    showCancelButton: true,
+                                                    closeOnConfirm: false,
+                                                    animation: "slide-from-right",
+                                                    inputPlaceholder: "退貨原因"
+                                                },
+                                                function(inputValue) {
+                                                    if (inputValue === false) return false;
+                                                    var postData = {
+                                                        orderId: trList.id,
+                                                        // goodsInfo: JSON.stringify(newGoods)
+                                                        rebackAll: 'Y',
+                                                        reason: inputValue
+                                                    };
+                                                    $.ajax({
+                                                        url:"/api/haix/goods/order/reback",
+                                                        type: "POST",
+                                                        data: JSON.stringify(postData),
+                                                        dataType: "json",
+                                                        contentType: "application/json;charset=utf-8",
+                                                        success:function(res){
+                                                            if (res.code !== 200) {
+                                                                swal("申請退貨失敗",  res.message,"error");
+                                                                return;
+                                                            }
+                                                            // succse
+                                                            
+                                                            swal({
+                                                                title: "申請退貨中",
+                                                                text: inputValue ? "原因：" + inputValue : "",
+                                                                type: "success"
+                                                            },
+                                                            function(clickEvent) {
+                                                                if (clickEvent) {
+                                                                    location.reload();
+                                                                }
+                                                            });
+                                                        }}
+                                                    );
+                                                });
+
+                                                return;
+                                            }
+
+                                            var content = $("<div style='text-align: center;'></div>");
+                                            var contentBtnWrap = $("<div></div>");
+                                            var allBackBtn = $("<button class='all-back button gray'>整筆訂單退貨</button>");
+                                            var detailBtn = $("<button class='detail-btn button gray'>細項退貨</button>");
+                                            content.append(contentBtnWrap);
+                                            contentBtnWrap.append(allBackBtn).append(detailBtn);
+
+                                            // 設定內容
+                                            setPopContent(content);
+                                            // 開啟
+                                            openPop();
+                                        })
+                                    }
+
+                                    return [cancelButton, editButton, backOrderBtn];;
+                                },
+                                'status': function(tr, text) {                                
+                                    return _this.statusList[text];
+                                },
+                                'memo': function(tr, text) {
+                                    if (!text) {
+                                        return;
+                                    }
+                                    return '<div class="td-memo">' + text + '</div>';
+                                }
+                            }
+                        }
+                    );
+                },
+                init: function() {
+                    var _this = this;
+                    $.ajax({
+                        url:"/api/haix/goods/order/list",
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(res){
+                            if (res.code !== 200) {
+                                alert(res.message);
+                                return;
+                            }
+                            _this.orderData = res.data;
+                            _this.setTableMethod();
+                        }}
+                    );
+                }
+            };
+         });
+    </script>
+</body>
+</html>

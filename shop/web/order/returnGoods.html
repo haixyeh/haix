@@ -1,0 +1,134 @@
+<style>
+    .reback-wrap {
+        display: inline-block;
+    }
+    .reback-wrap {
+        margin: 20px auto;
+        max-width: 1000px;
+    }
+    .back-link {
+        cursor: pointer;
+    }
+    .back-open-wrap {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 2;
+    }
+    .place-mask {
+        position: absolute;
+        top: 0;
+        height: 0;
+        background: #000;
+        width: 100vw;
+        height: 100vh;
+        opacity: 0.7;
+        z-index: -1;
+    }
+    .reback-pop {
+        margin: 150px auto;
+        padding: 20px;
+        border-radius: 5px;
+        width: 800px;
+        min-height: 200px;
+        background: #FFF;
+    }
+    .back-link {
+        color: #1D63BB;
+    }
+    .h3-title {
+        margin-bottom: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #37548C;
+    }
+    .reback-pop {
+        position: relative;
+        line-height: 30px;
+        font-size: 14px;
+    }
+    .reback-pop ul {
+        margin-top: 20px;
+        font-size: 16px;
+        line-height: 20px;
+    }
+    .reback-pop ul li {
+        margin-left: 20px;
+        font-size: 13px;
+        line-height: 22px;
+    }
+    .close { 
+        position: absolute;
+        right: -7px;
+        top: -7px;
+        width: 25px;
+        height: 25px;
+        background: #AAA;
+        border-radius: 25px;
+        box-shadow: 2px 2px 5px 0px black;
+        cursor: pointer;
+    }
+    .close:hover {
+        background: rgb(218, 93, 93);
+    }
+    .close:hover:before,
+    .close:hover:after  {
+        top: 10px;
+        height: 6px;
+    }
+    .close:before,
+    .close:after {
+        position: absolute;
+        content: '';
+        width: 15px;
+        height: 5px;
+        background: #FFF;
+        transform: rotate(45deg);
+        top: 11px;
+        left: 5px;
+    }
+    .close:after {
+        transform: rotate(-45deg);
+    }
+</style>
+<div class="reback-wrap">
+    <a id="openLink" class="back-link">退貨政策</a>
+    <div class="back-open-wrap" style="display: none;">
+        <div class="place-mask"></div>
+        <div class="reback-pop">
+            <div class="close"></div>
+            <h3 class="h3-title">退換貨需知</h3>
+            <p>請撥打"0800-878-887"客服專線→按2→由專人為您處理退換貨事宜。</p>
+            <p>每筆訂單僅接受一次退貨<span class="red-tip">請於貨品到達後七日內退貨申請</span></p>
+            提醒您，申請退貨時，請務必將您所訂購之完整商品、配件、贈品及包裝置入於原外包裝箱內，以利後續退換貨作業。<br/>
+            如您已收到發票，請依發票背面之銷退折讓單上說明，簽章後寄回Haix Live，以便儘速為您辦理退款。<br/>
+            若您是以其他方式(電話/語音/型錄)訂購則恕不提供本項服務。<br/>
+            請注意，退貨的商品必須為全新狀態且完整包裝(包含主機、附件、內外包裝、隨機文件、贈品等)。<br/>
+            <ul>
+                此外，下列情形可能影響您的退貨權限：
+                <li>(1)隨商品已附上相同之試用品，或在收到影音光碟及軟體前已提供您試聽、試用機會。</li>
+                <li>(2)在不影響您檢查商品情形下，您將商品包裝毀損、封條移除、吊牌拆除、貼膠移除或標籤拆除等情形。</li>
+                <li>(3)在您收到商品之前，已提供您檢查商品之機會。</li>
+                <li>(4)其他逾越檢查之必要或可歸責於您之事由，致商品有毀損、滅失或變更者。</li>
+            </ul>
+            <ul>
+                退款方式：
+                <li>(1)成功退款後僅提供購物金使用, 允許在Haix Live當成現金使用</li>
+                <li>(2)退貨成功後, 若當下層級有折扣未達優惠金額, 會先扣除優惠金額後返回購物金。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        $('.place-mask, .close').on('click', function(e) {
+            e.preventDefault();
+            $('.back-open-wrap').hide();
+        })
+        $('#openLink').on('click', function() {
+            $('.back-open-wrap').show();
+        });
+    })
+</script>

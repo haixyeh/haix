@@ -131,9 +131,16 @@ class UserInfoController extends Controller
             'firstName.max' => '最多填寫10個字',
             'lastName.required' => '請填名字',
             'lastName.max' => '最多填寫20個字',
-            'address.required' => '請填寫密碼',
+            'address.required' => '請填寫收貨地址',
             'phone.required' => '請填寫手機號碼',
         ]);
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            $this->response['code'] = 1039;
+            $this->response['message'] = $error;
+            return response()->json($this->response);
+        }
+        
         unset($data['captcha']);
         UserInfo::where([
             'account' => $user['name'],

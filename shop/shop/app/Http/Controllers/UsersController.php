@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Hash;
 use App\Users;
 use App\UserInfo;
 use Illuminate\Http\Request;
@@ -61,14 +62,13 @@ class UsersController extends Controller
         $Create=Users::create([
             'name' =>$data['name'],
             'email' =>$data['email'],
-            'password' => $data['password'],
+            'password' => Hash::make($data['password']),
             'api_token' => $api_token
         ]);
         
         if ($Create) {
             $this->response['message'] = '建立成功';
             // 成功後建立用戶資料
-            // exit();
             $CreateUserInfo=UserInfo::create([
                 'email' => $data['email'],
                 'account' => $data['name'],
@@ -132,7 +132,7 @@ class UsersController extends Controller
             return response()->json($this->response);
         }
         // 更新api token 使客端登出
-        if ($users->update(['password' => $data['password'], 'api_token'=> Str::random(10)])) {
+        if ($users->update(['password' => Hash::make($data['password']), 'api_token'=> Str::random(10)])) {
             $this->response['message'] = '會員:'. $data['account'].',密碼更改成功';
             return response()->json($this->response);
         };
@@ -141,7 +141,7 @@ class UsersController extends Controller
         return response()->json($this->response);
     }
 
-    // 修改層級
+    // 修改等級
     public function updateLevel(Request $request) {
         $data = $request->all();
         $validator = Validator::make($data, [
@@ -149,7 +149,7 @@ class UsersController extends Controller
             'level' => ['required', 'string'],
         ],[
             'id.required' => '列表key值有誤',
-            'level.required' => '層級資料有誤',
+            'level.required' => '等級資料有誤',
         ]);
 
         $users = Users::where([
@@ -162,11 +162,11 @@ class UsersController extends Controller
         }
         // 更新api token 使客端登出
         if ($users->update(['level' => $data['level'], 'api_token'=> Str::random(10)])) {
-            $this->response['message'] = '會員:'. $users->first()['name'].',層級更改成功';
+            $this->response['message'] = '會員:'. $users->first()['name'].',等級更改成功';
             return response()->json($this->response);
         };
         $this->response['code'] = 2003;
-        $this->response['message'] = '會員:'. $users->first()['name'] .',層級更改失敗';
+        $this->response['message'] = '會員:'. $users->first()['name'] .',等級更改失敗';
         return response()->json($this->response);
     }
     // 刪除

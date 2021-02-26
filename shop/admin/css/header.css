@@ -21,17 +21,22 @@
     color: #EEE;
     text-decoration: underline;
 }
+.logo-link {
+    text-decoration: none;
+}
+.logo-link::before {
+    display: inline-block;
+}
 .logo {
-    float: left;
+    display: table-cell;
+    vertical-align: middle;
     box-sizing: border-box;
-    padding: 29px;
-    width: 250px;
+    width: 20vw;
     height: 100px;
     background: #DEF6FF;
     color: #282E3A;
     text-align: center;
-    font-size: 38px;
-    font-family: 'KulminoituvaRegular';
+    font-size: 32px;
 }
 .login-wrap {
     float: right;
@@ -228,8 +233,23 @@ button.gray {
     text-shadow: 1px 1px 1px #5A5858;
     cursor: pointer;
 }
+
 button.gray:hover {
     background: #665e5e;
+}
+button.green {
+    display: inline-block;
+    background: #7EBF60;
+    border: none;
+    padding: 10px 25px 10px 25px;
+    color: #FFF;
+    box-shadow: 1px 1px 5px #598844;
+    border-radius: 3px;
+    text-shadow: 1px 1px 1px #3C5C2E;
+    cursor: pointer;
+}
+button.green:hover {
+    background: #598844;
 }
 
 button.minsize {

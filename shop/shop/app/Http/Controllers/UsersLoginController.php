@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Users;
+use Hash;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
@@ -25,18 +27,25 @@ class UsersLoginController extends Controller
     public function UserTypeLoginFind ($data)
     {
         $users = array([]);
+        $password = Hash::make($data['password']);
+
         if (array_key_exists('account', $data)) {
             $users = Users::where([
-                'name' => $data['account'],
-                'password' => $data['password']
+                'name' => $data['account']
                 ])->first();
         }
 
         if (array_key_exists('email', $data)) {
             $users = Users::where([
-                'email' => $data['email'],
-                'password' => $data['password']
+                'email' => $data['email']
                 ])->first();
+        }
+
+        $dbpassword = $users->first()->password;
+        $booleanValue = Hash::check($data['password'], $dbpassword);
+        // Hash 確認密碼是否符合
+        if (!$booleanValue) {
+            return null;
         }
 
         return $users;
@@ -101,14 +110,14 @@ class UsersLoginController extends Controller
                 'name' => 'home',
                 'open' => 'Y'
             ),
-            // array(
-            //     'link' => '/web/shopping',
-            //     'name' => 'shopping',
-            //     'open' => 'Y'
-            // ),
             array(
                 'link' => '/web/member',
                 'name' => 'member',
+                'open' => $reslut['is_login']
+            ),
+            array(
+                'link' => '/web/order',
+                'name' => 'order',
                 'open' => $reslut['is_login']
             ),
         );
@@ -117,5 +126,4 @@ class UsersLoginController extends Controller
 
         return response()->json($this->response);
     }
-
 }

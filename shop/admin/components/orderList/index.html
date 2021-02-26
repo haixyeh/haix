@@ -1,9 +1,11 @@
 <div>
     <h3 class="title">訂單管理</h3>
     <div id="tab"></div>
-    <table id="orderListTable">
+    <table id="orderListTable" class="order-list-table">
         <thead>
             <tr>
+                <th name="orderNumber">訂單號</th>
+                <th name="account">會員帳號</th>
                 <th name="name">收件者</th>
                 <th name="phone">電話</th>
                 <th name="status">處理狀態</th>
@@ -11,9 +13,10 @@
                 <th name="address">地址</th>
                 <th name="updated_at">最後異動時間</th>
                 <th name="oprate">操作</th>
+                <th name="memo">備註</th>
             </tr>
         </thead>
-        <tbody id="oderList"></tbody>
+        <tbody id="oderList" class="is-open-all"></tbody>
     </table>
 </div>
 <style>
@@ -36,6 +39,32 @@
     .item-name {
         float: left;
     }
+    .order-list-table tbody tr {
+        display: none;
+    }
+    .order-list-table .is-open-all tr,
+    .order-list-table .is-open-N tr.tr-status-N,
+    .order-list-table .is-open-Y tr.tr-status-Y,
+    .order-list-table .is-open-S tr.tr-status-S,
+    .order-list-table .is-open-E tr.tr-status-E {
+        display: table-row;
+    }
+    .tab-wrap button {
+        margin: 5px;
+        border-radius: 5px;
+        background: #AAA;
+        border: 1px solid #000;
+        outline: none;
+        color: #FFF;
+        cursor: pointer;
+    }
+    .tab-wrap .current {
+        background: #A6D8DA;
+        color: #000;
+    }
+    .conten-wrap {
+        min-width: 700px;
+    }
 </style>
 <script>
     (function($){
@@ -44,6 +73,7 @@
                 var _this = this;
                 _this.getOrderList();
             },
+            orderData: [], // 訂單內容數據
             tabItemName: {
                 all: '全部',
                 N: '未接受',
@@ -54,36 +84,82 @@
             tabBindMethod: function(e) {
                 e.preventDefault();
                 var tabName = ($(this).prop('id')).replace('tab_', '');
-                order.setTable(tabName);
+                // order.setTable(tabName);
+
+                $("#oderList").removeAttr('class');
+                $("#oderList").attr('class', 'is-open-' + tabName);
+                $(this).addClass('current').siblings().removeClass('current');
             },
             setTabButton: function() {
                 var _this = this;
                 var tabWrap = $('<div class="tab-wrap"></div>');
-                Object.keys(_this.tabItemName).forEach(function(item) {
+                Object.keys(_this.tabItemName).forEach(function(item, index) {
+                    
                     var button = $('<button id="tab_'+ item +'">' + _this.tabItemName[item] + '</button>');
                     button.bind('click', _this.tabBindMethod);
+                    if (!index) {
+                        button.addClass('current');
+                    }
                     tabWrap.append(button);
                 });
                 $(tabWrap).appendTo('#tab');
             },
-            setOption: function(status) {
-                var goodsStatusOptions = $("<td></td>");
-                var options = (
-                    '<select class="goods-status">' +
-                        '<option value="N">未接受訂單</option>' +
-                        '<option value="Y">已接受訂單</option>' +
-                        '<option value="S">出貨中</option>' +
-                        '<option value="E">完成訂單</option>' +
-                    '</select>'
-                );
-                goodsStatusOptions.append(options);
+            changeStatus: function(selfThis, status) {
+                var _this = this;
+                var inputVal = status ? status : $(selfThis).val();
+                var id = $(selfThis).data('id');
+                var listIndex = $(selfThis).parents('tr').data('index');
+                var postData = {
+                    id: id,
+                    status: inputVal
+                };
+                $.ajax({
+                    url:"/api/admin/goods/order/status",
+                    type: "POST",
+                    data: JSON.stringify(postData),
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert(res.message);
+                            return;
+                        }
+                        if (res.code === 200 && res.message) {
+                            alert(res.message);
+                        }
+                        _this.orderData[listIndex]['status'] = inputVal;
+                        _this.setTable();
 
+                    }}
+                );
+            },
+            setStatus: function(status, id) {
+                var _this = this;
+                var goodsStatusOptions = $("<td></td>");
+                // 已完成
+                if (status === 'E') {
+                    return goodsStatusOptions.text('訂單已完成');
+                }
+                
+                var select = $('<select class="goods-status" data-id="'+ id +'"></select>');
+                var options = $(
+                    '<option value="N">未接受訂單</option>' +
+                    '<option value="Y">已接受訂單</option>' +
+                    '<option value="S">出貨中</option>'
+                    // '<option value="E">完成訂單</option>'
+                );
+                $(select).bind('change', function() { var selfThis = this; _this.changeStatus(selfThis); });
+
+                options.appendTo(select);
+                goodsStatusOptions.append(select);
+                
                 $(goodsStatusOptions).find('option').each(function() {
                     if ($(this).val() === status) {
                         $(this).attr('selected', true);
                         return false;
                     }
-                })
+                });
+
                 return goodsStatusOptions;
             },
             setGoods: function(goodsItems) {
@@ -97,20 +173,89 @@
 
                 return goodsList;
             },
-            setOprate: function(status) {
+            setOprate: function(id, status) {
+                var _this = this;
                 var oprate = $('<td></td>');
-                if (status !== 'N' && status !== 'Y') {
-                    return oprate;
-                }
 
-                var btn = $('<button class="pink">訂單取消</button>');
-                $(btn).bind('click', function(e) {
-                    e.preventDefault();
-                    var cancelCheck = confirm('確認取消訂單？ 取消後無法繼續執行後續操作！！');
-                });
-                return oprate.append(btn);
+                var cancelBtn = (status === 'N') ? $('<button class="pink minsize">訂單取消</button>') : null;
+                if(cancelBtn) {
+                    $(cancelBtn).bind('click', function(e) {
+                        var btnSelf = this;
+                        e.preventDefault();
+                        var cancelCheck = confirm('確認取消訂單？ 取消後無法繼續執行後續操作！！');
+                        if (!cancelCheck) {
+                            return;
+                        }
+                        $.ajax({
+                            url:"/api/admin/goods/order/" + id,
+                            type: "PUT",
+                            success:function(res){
+                                if (res.code !== 200) {
+                                    alert(res.message);
+                                }
+                                if (res.message) {
+                                    alert(res.message);
+                                }
+                                $(btnSelf).parents('tr').remove();
+                            }}
+                        );
+                    });
+                }
+                
+                var finishOrderBtn = (status === 'S') ? $('<button data-id="'+ id +'">完成訂單</button>') : null;
+                if (finishOrderBtn) {
+                    $(finishOrderBtn).bind('click', function(e) {
+                        e.preventDefault();
+                        if (confirm('是否確定結案？ \n 完成後即加入會員消費額度')) {
+                            _this.changeStatus(this, 'E');
+                        }
+                    });
+                }
+                return oprate.append([cancelBtn, finishOrderBtn]);
             },
-            orderData: [],
+            setMemo: function(id, filedValue) {
+                var tdContent = $('<td title="點擊兩下即可修改備註"></td>');
+                var dbInput = $('<div>'+ (filedValue ? filedValue : '') +'</div>');
+                dbInput.appendTo(tdContent);
+                // 設定點擊兩下修改方式
+                $(tdContent).bind('dblclick', function() {
+                    var value = $(dbInput).text();
+                    var input = $('<input value="' + value +'">');
+                    $(dbInput).append(input);
+                    // input 離焦
+                    $(input).bind('blur', function() {
+                        var inputVal = $(input).val();
+                        if (inputVal && inputVal === filedValue) {
+                            $(input).remove();
+                            return;
+                        };
+                        var postData = {
+                            id: id,
+                            memo: inputVal
+                        };
+                        $.ajax({
+                            url:"/api/admin/goods/order/memoFix",
+                            type: "POST",
+                            data: JSON.stringify(postData),
+                            dataType: "json",
+                            contentType: "application/json;charset=utf-8",
+                            success:function(res){
+                                if (res.code !== 200) {
+                                    alert(res.message);
+                                    $(input).remove();
+                                    return;
+                                }
+                                // succse
+                                $(dbInput).text(inputVal);
+                                $(input).remove();
+                            }}
+                        );
+                    });
+                    $(input).focus();
+                });
+
+                return tdContent;
+            },
             getOrderList: function() {
                 var _this = this;
                 $.ajax({
@@ -132,33 +277,33 @@
             setTable: function(search = null) {
                 var _this = this;
                 $("#oderList").html('');
-                _this.orderData.forEach((list) => {
-                    _this.tr = $("<tr></tr>").appendTo("#oderList");
+                _this.orderData.forEach((list, index) => {
+                    _this.tr = $('<tr class="tr-status-'+ list.status  +'" data-index="'+ index +'"></tr>').appendTo("#oderList");
                     if (search !== 'all' && search && list.status !== search) {
                         return;
                     }
+                    
                     $('#orderListTable thead').find('th').each(function(index, ele) {
                         var filedName = $(ele).attr('name');
 
-                        if (filedName === 'status') {
-                            $(_this.tr).append(_this.setOption(list[filedName]));
-                            return;
+                        switch (filedName) {
+                            case 'status':
+                                $(_this.tr).append(_this.setStatus(list[filedName], list.id));
+                                break;
+                            case 'goods':
+                                $(_this.tr).append(_this.setGoods(list[filedName]));
+                                break;
+                            case 'oprate':
+                                $(_this.tr).append(_this.setOprate(list.id, list.status));
+                                break;
+                            case 'memo':
+                                $(_this.tr).append(_this.setMemo(list.id, list[filedName]));
+                                break;
+                            default:
+                                $(_this.tr).append('<td>'+ (list[filedName] ? list[filedName] : '') +'</td>');
+                                break;
                         }
-                        if (filedName === 'goods') {
-                            var goodsData = list[filedName];
-                            $(_this.tr).append(_this.setGoods(goodsData));
-                            return;
-                        }
-
-                        if (filedName === 'oprate') {
-                            $(_this.tr).append(_this.setOprate(list.status));
-                            return;
-                        }
-                        if (filedName && list[filedName]) {
-                            $(_this.tr).append('<td>'+ list[filedName] +'</td>');
-                            return;
-                        }
-                        $(_this.tr).append('<td></td>');
+                        // $(_this.tr).append('<td></td>');
                     });
                 });
             }

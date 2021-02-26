@@ -61,7 +61,7 @@ input[type="file"] {
 }
 </style>
 <div>
-    <h3 class="title">商品上傳</h3>
+    <h3 class="title" id="goodsTitle">商品上傳</h3>
     <div class="goods-form-wrap clearfix">
         <form class="goods-form" id="goodsForm">
             <div class="input-wrap">
@@ -152,6 +152,8 @@ var isEdit = false;
             }
             _this.id = id;
 
+            $('#goodsTitle').text('商品編輯');
+
             $.ajax({
                 url:"/api/admin/goods/single/" + id,
                 type: "GET",
@@ -164,7 +166,6 @@ var isEdit = false;
                     _this.isEdit = true;
                     Preview.change_file(JSON.parse(res.data.images));
                     Object.keys(res.data).forEach(function(item) {
-                        console.log(item, 'item');
                         var inputName = toDash(item);
                         var inputFiled = $('.goods-form').find("input[name='"+ inputName +"'], textarea[name='"+ inputName +"'], select[name='"+ inputName +"']");
                         if (!inputFiled[0]) {
@@ -250,10 +251,12 @@ var isEdit = false;
                     processData: false,
                     type: "POST",
                     success:function(res){
-                        if (res.code === 200) {
-                            alert(res.message || 'error');
-                            location.reload();
+                        alert(res.message || 'error');
+                        if (res.code !== 200) {
+                            return;
                         }
+                        window.history.back();
+                        setTimeout(function() { location.reload(); }, 10);
                     }
                 });
                 return;

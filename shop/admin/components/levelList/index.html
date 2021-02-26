@@ -1,23 +1,37 @@
 <style>
+    .set-level-wrap {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.363);
+        width: 100%;
+        height: 100%;
+        text-align: center;
+    }
+    .set-level-wrap::before {
+        display: inline-block;
+        vertical-align: middle;
+        content: "";
+        width: 0;
+        height: 100%;
+    }
     .setting-position {
         position: relative;
     }
     .setting-wrap {
-        display: none;
-        position: absolute;
-        top: 0;
-        left: 0;
+        margin: 0 auto;
         padding: 20px;
         border-radius: 5px;
         border: 1px solid rgb(163, 163, 163);
         box-sizing: border-box;
         background:#FFF;
         width: 500px;
-        /* height: 500px; */
+        text-align: left;
     }
     .setting-position {
         display: inline-block;
-        vertical-align: top;
+        vertical-align: middle;
     }
     .add-level {
         margin-bottom: 20px;
@@ -25,16 +39,52 @@
     .btn-wrap {
         text-align: right;
     }
+    .ml-10 {
+        margin-left: 10px;
+    }
+    .red-tip {
+        font-size: 14px;
+        color: rgb(240, 68, 68);
+    }
+    input.disabled {
+        background-color: rgb(230 230 230);
+        cursor: not-allowed;
+    }
 </style>
 <div>
     <h3 class="title">等級管理及優惠設定</h3>
-    <button id="addLevel" class="add-level gray">新增層級設定</button>
+    <div id="addLevelSet" class="add-level"></div>
+    <span class="red-tip">等級晉級金額,新增後無法編輯</span>
+    <div class="red-tip">滿額折扣是重複計算的 ex: 滿千送百,則五千送五百</div>
+    <table id="levelTable">
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>等級名稱</th>
+                <th>優惠方式</th>
+                <th>等級晉級金額</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<!-- 修改等級設定 -->
+<div id="setLevel" class="set-level-wrap">
     <div class="setting-position">
         <div class="setting-wrap">
             <form id="levelForm">
+                <input type="hidden" name="id">
                 <div class="input-wrap">
                     <label for="">等級名稱</label>
                     <input type="text" name="level-name">
+                </div>
+                <div class="input-wrap">
+                    <label for="">等級晉級金額</label>
+                    <input type="number" name="upgrade-amount">
+                    <label for=""></label>
+                    <div class="red-tip"># 等級晉級金額,新增後無法編輯</div>
+                    <div class="red-tip"># 滿額折扣是重複計算的 ex: 滿千送百,則五千送五百</div>
                 </div>
                 <div class="input-wrap">
                     <label for="">是否設定優惠</label>
@@ -48,7 +98,6 @@
                     <select name="offer-type" id="offerType" value="A">
                         <option value="A">滿額折扣送</option>
                         <option value="B">固定折扣％數</option>
-                        <!-- <option value="C">滿額折扣％數</option> -->
                     </select>
                 </div>
                 <div class="input-wrap type-a">
@@ -63,26 +112,165 @@
                     <label for="">折扣%數</label>
                     <input type="number" name="present">
                 </div>
-                <div class="btn-wrap">
-                    <button id="close" class="close-btn gray">關閉</button>
-                    <button id="submit" class="close-btn pink">送出</button>
-                </div>
             </form>
         </div>
     </div>
-    <table id="levelTable">
-        <thead>
-            <tr>
-                <th>編號</th>
-                <th>等級名稱</th>
-                <th>優惠方式</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
 </div>
+
 <script>
     (function($){
+        // 率先整理
+        var levelTabel = {
+            // 新增 ＆＆ 編輯
+            submitBtnMehtod: function(submitBtn, tempContent) {
+                $(submitBtn).bind('click', function(e) {
+                    e.preventDefault();
+                    var formData = {};
+                    var hasError = false;
+                    var isEdit = false;
+                    var handleError = $(tempContent).find('form').find('input, select, textarea').each(function(index, inputDom) {
+                        if (hasError) {
+                            return false;
+                        }
+
+                        var inputType = $(inputDom).attr('type');
+                        var inputName = $(inputDom).attr('name');
+                        var inputValue = $(inputDom).val();
+
+                        if (inputName === 'id' && (inputValue || inputValue === 0)) {
+                            isEdit = true;
+                        }
+                        // 隱藏以及不能輸入的欄位 不驗證
+                        if (inputName !== 'id' &&($(inputDom).is(":hidden") || $(inputDom).is(":disabled"))) {
+                            return;
+                        }
+
+                        if (!inputValue && inputName !== 'id') {
+                            var filedName = $(inputDom).siblings('label').text();
+                            var errorMsg = '請先輸入'+ filedName;
+                            hasError = true;
+                            alert(errorMsg);
+                            return false;
+                        }
+                        if (inputType === 'radio') {
+                            if (!$(inputDom).is(":checked")) return;
+                        }
+                        if (!inputName) {
+                            console.error('須設置input name');
+                        }
+                        var postName = transformStr(inputName);
+                        formData[postName] = inputValue;
+                    });
+
+                    if (hasError) {
+                        return;
+                    }
+                    var urlPath = isEdit ? "/api/admin/goods/level/edit" : "/api/admin/goods/level/add";
+                    $.ajax({
+                        url: urlPath,
+                        data: JSON.stringify(formData),
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(res){
+                            alert(res.message);
+                            if (res.code !== 200) {
+                                return;
+                            }
+                            location.reload();
+                        }}
+                    );
+                });
+            }
+        };
+        var tempIsOk = false;
+        // 設定level按鈕的模板
+        var tempSetting = function(content, setting) {
+            var mainDom = $('#setLevel')
+            var setLevelTemp = $('#setLevel .setting-position');    // 整體模板
+            var tempContent = $(setLevelTemp).find('.setting-wrap')[0];     // 模板內容
+            var oprateBtn = $('<button class="gray">' + setting['btnTitle'] + '</button>');     // 操作按鈕
+            var btnWrap = $('<div class="btn-wrap"></div>');    // 按鈕外框
+            var closeBtn = $('<button class="close-btn gray">關閉</button>');    // 作用按鈕（關閉）
+            var submitBtn = $('<button id="submit" class="close-btn pink">送出</button>');  // 作用按鈕（送出）
+            var editData = setting && setting.editData ? setting.editData : null;   // 數據資料
+
+            // 建置模板
+            if (!tempIsOk) {
+                tempIsOk = true;
+
+                // 各元件綁訂位置
+                submitBtn.appendTo(btnWrap, editData);
+                closeBtn.appendTo(btnWrap);
+                btnWrap.appendTo(tempContent);
+
+                $(closeBtn).bind('click', function(e) {
+                    e.preventDefault();
+                    $(mainDom).hide();
+                });
+                // 處理送出事件
+                levelTabel.submitBtnMehtod(submitBtn, tempContent, setting.isEdit);
+            }
+            // 內容設定操作按鈕
+            $(content).append(oprateBtn);
+
+            // 功能操作綁定開關
+            $(oprateBtn).bind('click', function() {
+                $(mainDom).toggle();
+
+                // 若有編輯資料
+                if (editData) {
+                    $(tempContent).find('form').find('input, select, textarea').each(function(index, inputDom) {
+                        var inputType = $(inputDom).attr('type');
+                        var inputName = $(inputDom).attr('name');
+                        var inputValue = $(inputDom).val();
+                        var name = transformStr(inputName);
+
+                        if (name === 'upgradeAmount' && setting.isEdit) {
+                            $(inputDom).attr('disabled', true).addClass('disabled');
+                        }
+                        if (name === 'upgradeAmount' && !setting.isEdit) {
+                            $(inputDom).attr('disabled', false).removeClass('disabled');
+                        }
+
+                        if (inputType === 'radio' && inputValue === editData[name]) {
+                            $(inputDom).click();
+                            return;
+                        }
+                        if (inputType === 'radio' && inputValue !== editData[name]) {
+                            $(inputDom).attr('checked', false);
+                            return;
+                        }
+                        if (editData[name] || editData[name] === 0) {
+                            $(inputDom).val(editData[name]);
+                        } else {
+                            $(inputDom).val('');
+                        }
+                        if (name === 'offerType') {
+                            $(inputDom).change();
+                        }
+                    });
+                }
+            });
+            
+            
+        }
+
+        // 新增處理
+        tempSetting('#addLevelSet', {
+            btnTitle: '新增等級設定',
+            isEdit: false,
+            editData: {
+                discount: null,
+                full: null,
+                id: null,
+                levelName: "",
+                offer: "Y",
+                offerType: "A",
+                present: null,
+                upgradeAmount: 0
+            }
+        });
         // 轉小駝峰
         function transformStr(str){
             var re=/-(\w)/g;
@@ -105,8 +293,12 @@
                 var offerText = '';
                 switch (item.offerType) {
                     case 'A':
+                        var tip = '';
+                        if ((item.discount/item.full) > 0.3) {
+                            tip = '[警告：優惠額度超過30％]'
+                        }
                         offerText = _this.offerType[item.offerType] + 
-                            '(滿額＄' + item.full + ', 折扣$' + item.discount +')';
+                            '(滿額＄' + item.full + ', 折扣$' + item.discount +')' + tip;
                         break;
                     case 'B':
                         offerText = _this.offerType[item.offerType] + '(折扣'+ item.present +'%)'
@@ -115,11 +307,27 @@
                         offerText = '無優惠';
                         break;
                 }
-                // console.log(offerText, 'offerText');
                 return offerText;
+            },
+            setDelLevel: function(id) {
+                $.ajax({
+                    url:"/api/admin/goods/level/" + id,
+                    type: "PUT",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert(res.message);
+                            return;
+                        }
+                        alert('刪除成功');
+                        location.reload();
+                    }
+                });
             },
             init: function() {
                 var _this = this;
+
                 $.ajax({
                     url:"/api/admin/goods/level/list",
                     type: "GET",
@@ -130,18 +338,41 @@
                             alert(res.message);
                             return;
                         }
-                        // console.log(res);
+
                         var contentTR = [];
-                        res.data.forEach(function(item) {
-                            contentTR.push(
-                                '<tr>'+
-                                    '<td>'+ item.id +'</td>'+
-                                    '<td>'+ item.levelName +'</td>'+
-                                    '<td>'+ _this.offerTextMethod(item) +'</td>'+
-                                '</tr>'
+                        var levelData = res.data;
+                        var delBtn;
+                        var editBtn;
+                        levelData.forEach(function(item, index) {
+                            var trList = $('<tr></tr>');
+                            var tdContent = $('<td></td>');
+                            trList.appendTo('#levelTable tbody');
+                            var btnWrap = $('<div></div>');
+                            btnWrap.appendTo(tdContent);
+
+                            // 新增編輯按鈕
+                            tempSetting(btnWrap, {
+                                btnTitle: '編輯',
+                                isEdit: true,
+                                editData: item
+                            });
+
+                            if (levelData.length >= 2 && levelData.length === (index +1)) {
+                                delBtn = $('<button class="button gray ml-10">刪除等級</button>');
+                                delBtn.appendTo(btnWrap);
+                                delBtn.bind('click', function(e) {
+                                    e.preventDefault();
+                                    _this.setDelLevel(item.id);
+                                })
+                            }
+                            trList.append(
+                                '<td>'+ (index + 1)+'</td>'+
+                                '<td>'+ item.levelName +'</td>'+
+                                '<td>'+ _this.offerTextMethod(item) +'</td>'+
+                                '<td>'+ item.upgradeAmount +'</td>'
                             )
+                            tdContent.appendTo(trList);
                         });
-                        $('#levelTable tbody').append(contentTR);
                     }}
                 );
             }
@@ -149,80 +380,29 @@
         // 設定
         levelList.init();
 
-        $("#addLevel").on('click', function() {
-            $('.setting-wrap').toggle();
-        });
-        $("#close").on('click', function(e) {
-            e.preventDefault();
-            $('.setting-wrap').hide();
-        });
         $("#levelForm #offerType").on('change', function() {
-            // console.log($(this).val())
             if (offerTypeVal === $(this).val()) {
                 return;
             }
-            $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).hide();
-            $("#levelForm .type-" + ($(this).val()).toLocaleLowerCase()).show();
+            $("#levelForm .type-" + (offerTypeVal).toLocaleLowerCase()).hide();
+            if ($(this).val()) {
+                $("#levelForm .type-" + ($(this).val()).toLocaleLowerCase()).show();
+            }
             offerTypeVal = $(this).val();
         });
         $('#levelForm input[name="offer"]').on('change', function() {
             var offerStatus= $(this).val();
+            if (!offerTypeVal) {
+                offerTypeVal = 'A';
+            }
             if (offerStatus === 'Y') {
                 $("#offerType").parent('.input-wrap').show();
-                $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).show();
+                $("#levelForm .type-" + (offerTypeVal).toLocaleLowerCase()).show();
             }
             if (offerStatus === 'N') {
                 $("#offerType").parent('.input-wrap').hide();
-                $("#levelForm .type-" + offerTypeVal.toLocaleLowerCase()).hide();
+                $("#levelForm .type-" + (offerTypeVal).toLocaleLowerCase()).hide();
             }
         })
-        $('#submit').on('click', function(e) {
-            e.preventDefault();
-            var formData = {};
-            var hasError = false;
-            $('#levelForm').find('input, select, textarea').each(function(index, inputDom) {
-                if (hasError) {
-                    return false;
-                }
-                if ($(inputDom).is(":hidden")) {
-                    return;
-                }
-                var inputType = $(inputDom).attr('type');
-                var inputName = $(inputDom).attr('name');
-                var inputValue = $(inputDom).val();
-
-                if (!inputValue) {
-                    var filedName = $(inputDom).siblings('label').text();
-                    var errorMsg = '請先輸入'+ filedName;
-                    hasError = true;
-                    alert(errorMsg);
-                    return;
-                }
-                if (inputType === 'radio') {
-                    if (!$(inputDom).is(":checked")) return;
-                }
-                if (!inputName) {
-                    console.error('須設置input name');
-                }
-                var postName = transformStr(inputName);
-                formData[postName] = inputValue;
-            });
-            console.log(formData, 'formData');
-
-            $.ajax({
-                url:"/api/admin/goods/level/add",
-                data: JSON.stringify(formData),
-                type: "POST",
-                dataType: "json",
-                contentType: "application/json;charset=utf-8",
-                success:function(res){
-                    alert(res.message);
-                    if (res.code !== 200) {
-                        return;
-                    }
-                    console.log(res);
-                }}
-            );
-        });
     })(jQuery)
 </script>

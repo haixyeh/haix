@@ -22,6 +22,7 @@ class LevelTable extends Migration
             $table->integer('full')->nullable();
             $table->integer('discount')->nullable();
             $table->integer('present')->nullable();
+            $table->integer('upgradeAmount');
             $table->timestamps();
         });
     }

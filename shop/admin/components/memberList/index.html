@@ -47,6 +47,10 @@
     .delete {
         margin-right: 6px;
     }
+    .red-tip {
+        font-size: 12px;
+        color: #F00;
+    }
 </style>
 <div class="member-list-wrap">
     <h3 class="title">會員列表</h3>
@@ -57,7 +61,8 @@
                 <th>郵件</th>
                 <th>建立日期</th>
                 <th>更新日期</th>
-                <th>層級</th>
+                <th>等級</th>
+                <th>消費總額</br><span class="red-tip">(完成訂單額度)</span></th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -153,7 +158,7 @@
                 isONchange = true;
                 setTimeout(function() {
                     if (beforeLevel !== afterLevel) {
-                        var check = confirm('確定更改會員層級？');
+                        var check = confirm('確定更改會員等級？');
                         var failMethod = function() {
                             levelSelect.val(beforeLevel);
                             isONchange = false;
@@ -239,6 +244,7 @@
                                     "<td>" +item.created_at +"</td>"+
                                     "<td>" +item.updated_at +"</td>"+
                                     '<td class="level-'+ item.id +'">' + levelSelect +"</td>"+
+                                    "<td>" +item.cost +"</td>"+
                                     "<td>" +_this.commonBtn(item.id, item.name)+ "</td>"+
                                 "</tr>";
 

@@ -1,6 +1,439 @@
+<script src="/admin/js/tabel.js"></script>
+<script src="/admin/js/sweetalert-dev.js"></script>
+<style>
+    .red-tip {
+        /* display: inline-block; */
+        color: rgb(247, 77, 77);
+        font-size: 12px;
+    }
+    .red-tip::before {
+        display: inline;
+        content: "( ";
+        font-size: 14px;
+    }
+    .red-tip::after {
+        display: inline;
+        content: " )";
+        font-size: 14px;
+    }
+    .goods-item-list {
+        margin-top: 5px;
+        padding: 5px;
+        border: 1px solid #7D9A9E;
+        border-radius: 5px;
+        background: #A6D8DA;
+        font-size: 13px;
+    }
+    .button {
+        margin: 0 5px 5px 0;
+    }
+    .button:last-child {
+        margin-bottom: 0;
+    }
+    .page-tab {
+        margin: 20px 0;
+    }
+    .apply-list-wrap .title,
+    .order-list-wrap .title {
+        margin-bottom: 5px;
+        color: #7D9A9E;
+        font-size: 17px;
+        font-weight: bold;
+    }
+    .red-text,
+    .green-text,
+    .gray-text {
+        text-align: center;
+    }
+    .red-text {
+        color: #DF453A;
+    }
+    .green-text {
+        color: #61C166;
+    }
+    .gray-text {
+        color: #AAA;
+    }
+    .over-text {
+        color: cadetblue;
+    }
+    .check-icon {
+        position: relative;
+        margin: 0 auto;
+        width: 19px;
+    }
+    .check-icon::before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 6px;
+        background: transparent;
+        bottom: -2px;
+        right: 0px;
+        border: 4px solid #61C166;
+        border-top: none;
+        border-right: none;
+        -webkit-transform: rotate(-55deg);
+        -ms-transform: rotate(-55deg);
+        transform: rotate(-55deg);
+        z-index: 9;
+    }
+    .order-list-wrap .td-memo p {
+        line-height: 20px;
+    }
+    .order-list-wrap .td-memo span {
+        color: #7D9A9E;
+    }
+</style>
 <div>
     <h3 class="title">退貨管理</h3>
+    <div class="red-tip">退貨不重新紀錄貨品數量, 請收到貨品後, 確認貨物狀態正常, 於商品列表自行更新數量</div>
+    <div class="page-tab">
+        <button id="backApplySwitch">退貨申請資料</button>
+        <button id="backOrderSwitch">退貨訂單詳情</button>
+    </div>
+    <div id="backOrderListWrap" class="order-list-wrap" style="display: none;">
+        <p class="title">退貨訂單詳情</p>
+        <table id="backOrderList" class="back-order-list">
+            <thead>
+                <tr></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div id="backApplyListWrap" class="apply-list-wrap">
+        <p class="title">退貨申請資料</p>
+        <table id="backApplyList" class="back-apply-list">
+            <thead>
+                <tr></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 <script>
-    console.log('退貨管理');
+    var backOrder = {
+        applyOrderData: {},
+        backOrderData: {},
+        init: function() {
+            var _this = this;
+            $('#backApplySwitch').on('click', function() {
+                _this.getApplyList();
+                $('#backOrderListWrap').hide();
+                $('#backApplyListWrap').show();
+
+                if (!$(this).hasClass('.current')) {
+                    $(this).addClass('current');
+                }
+                if ($('#backApplySwitch').hasClass('.current')) {
+                    $('#backApplySwitch').removeClass('current')
+                }
+            });
+            $('#backOrderSwitch').on('click', function() {
+                _this.getRebackList();
+                $('#backOrderListWrap').show();
+                $('#backApplyListWrap').hide();
+
+                if (!$(this).hasClass('.current')) {
+                    $(this).addClass('current');
+                }
+                if ($('#backApplySwitch').hasClass('.current')) {
+                    $('#backApplySwitch').removeClass('current')
+                }
+            });
+            
+            $('#backApplySwitch').click();
+        },
+        statusList: {
+            'N': '待商家確認訂單',
+            'Y': '已確認訂單',
+            'S': '出貨中',
+            'E': '訂單已完成',
+            'R': '退貨申請中',
+            'T': '待確認退貨商品',
+            'F': '退貨完成'
+        },
+        rebackStatusList: {
+            'C': '已取消申請',
+            'N': '待申請通過',
+            'Y': '已接受申請',
+            'F': '退貨程序已完成'
+        },
+        setApplyOrderTable: function() {
+            var _this = this;
+            setTable.call(
+                $('#backApplyListWrap'),
+                {
+                    tableData: _this.applyOrderData,
+                    field: {
+                        'created_at': '申請日期',
+                        'orderNumber': '訂單號', 
+                        'goods': '退貨商品',
+                        'rebackAll': '全部退貨',
+                        'rebackStatus': '退貨狀態',
+                        'reason': '退貨原因',
+                        'memo': '備註',
+                        'updated_at': '最後異動時間',
+                        'oprate': '操作'
+                    },
+                    setTrData: {
+                        id: 'id',
+                        status: 'status'
+                    },
+                    tdContent: {
+                        'oprate': function(tr, text, trList){
+                            var rebackStatus = trList.rebackStatus;
+
+                            // 通過申請按鈕
+                            var applyCrossBtn = rebackStatus === 'N' ? $('<button class="green button">通過申請</button>') : null;
+                            if (applyCrossBtn) {
+                                applyCrossBtn.bind('click', function(e) {
+                                    e.preventDefault();
+                                    swal({
+                                        title: "確認訂單號：『" + trList.orderNumber + "』,可申請退貨？",
+                                        text: "輸入通知退貨申請成功後須知",
+                                        type: "input",
+                                        showCancelButton: true,
+                                        closeOnConfirm: false,
+                                        animation: "slide-from-top",
+                                        inputPlaceholder: "請需入須知"
+                                    },
+                                    function(inputValue) {
+                                        if (inputValue === false) return false;
+
+                                        if (inputValue === '') {
+                                            alert('請輸入取消原因');
+                                            return;
+                                        }
+                                        var postData = {
+                                            id: trList.id,
+                                            memo: inputValue
+                                        };
+                                        $.ajax({
+                                            url:"/api/admin/goods/order/apply/cross",
+                                            type: "POST",
+                                            data: JSON.stringify(postData),
+                                            dataType: "json",
+                                            contentType: "application/json;charset=utf-8",
+                                            success:function(res){
+                                                if (res.code !== 200) {
+                                                    swal("通過申請失敗：",  res.message,"error");
+                                                    return;
+                                                }
+                                                // succse
+                                                swal({
+                                                    title: "退貨申請成功：",
+                                                    text: inputValue ? "備註須知：" + inputValue : "",
+                                                    type: "success"
+                                                },
+                                                function(clickEvent) {
+                                                    if (clickEvent) {
+                                                        _this.getApplyList();
+                                                    }
+                                                });
+                                            }}
+                                        );
+                                    });
+                                });
+                            };
+
+                            // 取消申請按鈕
+                            var applyCancelBtn = rebackStatus === 'N' ? $('<button class="gray button">取消申請</button>') : null;
+                            if (applyCancelBtn) {
+                                applyCancelBtn.bind('click', function(e) {
+                                    e.preventDefault();
+                                    swal({
+                                        title: "確認「取消」該訂單號：『" + trList.orderNumber + "』申請？",
+                                        text: "輸入取消原因",
+                                        type: "input",
+                                        showCancelButton: true,
+                                        closeOnConfirm: false,
+                                        animation: "slide-from-bottom",
+                                        inputPlaceholder: "退貨原因"
+                                    },
+                                    function(inputValue) {
+                                        if (inputValue === false) return false;
+
+                                        if (inputValue === '') {
+                                            alert('請輸入取消原因');
+                                            return;
+                                        }
+                                        var postData = {
+                                            id: trList.id,
+                                            memo: inputValue
+                                        };
+                                        $.ajax({
+                                            url:"/api/admin/goods/order/apply/cancel",
+                                            type: "POST",
+                                            data: JSON.stringify(postData),
+                                            dataType: "json",
+                                            contentType: "application/json;charset=utf-8",
+                                            success:function(res){
+                                                if (res.code !== 200) {
+                                                    swal("取消退貨失敗：",  res.message,"error");
+                                                    return;
+                                                }
+                                                // succse
+                                                swal({
+                                                    title: "取消退貨申請",
+                                                    text: inputValue ? "備註原因：" + inputValue : "",
+                                                    type: "success"
+                                                },
+                                                function(clickEvent) {
+                                                    if (clickEvent) {
+                                                        _this.getApplyList();
+                                                    }
+                                                });
+                                            }}
+                                        );
+                                    });
+                                });
+                            };
+
+                            return [applyCrossBtn, applyCancelBtn];
+                        },
+                        'rebackStatus': function(tr, text) {
+                            var status = $('<div></div>')    
+                            switch (text) {
+                                case 'N':
+                                    $(status).addClass('red-text');
+                                    break;
+                                case 'Y':
+                                    $(status).addClass('green-text');
+                                    break;
+                                case 'F':
+                                    $(status).addClass('over-text');
+                                    break;
+                                case 'C':
+                                    $(status).addClass('gray-text');
+                                    break;
+                                default:
+                                    break;
+                            }                          
+                            return status.append(_this.rebackStatusList[text]);
+                        },
+                        'rebackAll': function(tr, text) {
+                            if (text !== 'Y') {
+                                return;
+                            }
+                            return "<div class='check-icon'></div>"
+                        },
+                        'goods': function(tr, text) {
+                            var goodsList = $("<div></div>");
+                            if (!text || trList.rebackStatus === 'Y' ||text === '') {
+                                return '<div style="text-align:center;">--</div>';
+                            }
+                            if (!text.length) {
+                                return goodsList;
+                            }
+                            text.forEach(function(item) {
+                                $('<div class="goods-item-list clearfix"><div class="item-name">'+ item.name + "</div><span> x " + item.counts +'</span></div>').appendTo(goodsList)
+                            });
+
+                            return goodsList;
+                        }
+                    }
+                }
+            );
+        },
+        setRebackOrderTable: function() {
+            var _this = this;
+            setTable.call(
+                $('#backOrderList'),
+                {
+                    tableData: _this.backOrderData,
+                    field: {
+                        'created_at': '訂單日期',
+                        'orderNumber': '訂單號', 
+                        'name': '收貨人', 
+                        'phone': '聯絡電話',
+                        'address': '地址',
+                        'goods': '所有商品',
+                        'totalAmount': '消費金額',
+                        'status': '訂單狀態',
+                        'memo': '訂單備註'
+                        // 'oprate': '操作'
+                    },
+                    setTrData: {
+                        id: 'id',
+                        status: 'status'
+                    },
+                    tdContent: {
+                        'oprate': function(tr, text, trList){
+                            var status = trList.status;
+                            if (trList.cancelOrder === 'Y') {
+                                $(tr).addClass('not-has');
+                                return null;
+                            }
+
+                            
+                            // // 退貨申請
+                            // var backOrderBtn = status === 'E' ? $('<button>退貨申請</button>') : null;
+                            // if (backOrderBtn) {
+                            //     backOrderBtn.bind('click', function(e) {
+                            //         e.preventDefault();
+                            //         var onlyAllBack = false;
+
+
+                            // return [cancelButton, editButton, backOrderBtn];
+                        },
+                        'status': function(tr, text) {                                
+                            return _this.statusList[text];
+                        },
+                        'goods': function(tr, text) {
+                            var goodsList = $("<div></div>");
+                            if (!text.length) {
+                                return goodsList;
+                            }
+                            text.forEach(function(item) {
+                                $('<div class="goods-item-list clearfix"><div class="item-name">'+ item.name + "</div><span> x " + item.counts +'</span></div>').appendTo(goodsList)
+                            });
+
+                            return goodsList;
+                        },
+                        'memo': function(tr, text) {
+                            return '<div class="td-memo">' + text + '</div>';
+                        }
+                    }
+                }
+            );
+        },
+        getApplyList: function() {
+            var _this = this;
+            $.ajax({
+                url:"/api/admin/goods/order/apply/list",
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    if (!res || !res.data || !Object.keys(res.data).length) {
+                        return;
+                    }
+                    _this.applyOrderData = res.data;
+                    _this.setApplyOrderTable();
+                    // _this.setTable();
+                    // _this.setTabButton();
+                }
+            });
+        },
+        getRebackList: function() {
+            var _this = this;
+            $.ajax({
+                url:"/api/admin/goods/order/back/list",
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success:function(res){
+                    if (!res || !res.data || !Object.keys(res.data).length) {
+                        return;
+                    }
+                    _this.backOrderData = res.data;
+                    _this.setRebackOrderTable();
+                    // _this.setTable();
+                    // _this.setTabButton();
+                }
+            });
+        }
+    }
+    backOrder.init();
 </script>

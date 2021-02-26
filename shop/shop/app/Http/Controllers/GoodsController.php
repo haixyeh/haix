@@ -65,49 +65,82 @@ class GoodsController extends Controller
         return $this->success($this->shopCarData($request));
     }
     // 數據 - 購物車資料
-    public function shopCarData(Request $request, $isForData = false){
+    public function shopCarData(Request $request, $isForData = false, $goodsListData = []){
         $user = UserInfoController::instance()->UserGet($request);
+        $userAccount = $user->name;
         $userId = $user->id;
         $userLevel = LevelController::instance()-> mapLevelLast($user->level);
-        $carListData = json_decode(RedisServer::get('user'. $userId . 'car'));
-        $totalCount = 0;
-        $totalAmount = 0;
+        if (empty($goodsListData)) {
+            $carListData = json_decode(RedisServer::get('user'. $userId . 'car'));
+        } else {
+            $carListData = $goodsListData;
+        }
+
         $levelProms = 0;
         $data = array(
             'shopList' => array(),
             'userInfo' => UserInfoController::instance()->showData($request),
-            'totalCount' => $totalCount,
-            'totalAmount' => $totalAmount,
+            'totalCount' => 0,
+            'totalAmount' => 99999,
             'levelProms' => $levelProms,
             'userLevel' => $userLevel
         );
-        if (!empty($carListData)) {
-            foreach($carListData as $key => $carItem) {
-                $carItemID = $carItem->id;
-                $carItemCount = $carItem->count;
-                $goodsItem = $this->singleData($carItemID);
-                $goodsItem['count'] = (int)$carItemCount;
 
-                // 總計
-                $totalAmount += $goodsItem['amount'];
-                $totalCount += $carItemCount;
-                array_push($data['shopList'], $goodsItem);
-            }
-            $data['totalCount'] = $totalCount;
-            $data['totalAmount'] = $totalAmount;
-        }
-        $levelProms = LevelController::instance()-> promsPrice($user->level, $totalAmount);
+        $goodsInfo = $this->goodsMoeny($carListData);
+        $data['totalCount'] = $goodsInfo['totalCount'];
+        $data['totalAmount'] = $goodsInfo['totalAmount'];
+        $data['shopList'] = $goodsInfo['shopList'];
+
+        $levelProms = LevelController::instance()->promsPrice($user->level, $data['totalAmount']);
         $data['levelProms'] = $levelProms;
 
         if ($isForData) {
+            $currentProms = array(
+                'full'=> $userLevel['full'],
+                'offerType'=> $userLevel['offerType'],
+                'offer'=> $userLevel['offer'],
+                'discount'=> $userLevel['discount'],
+                'present'=> $userLevel['present']
+            );
+
             $data = array(
                 'goodsIndo' => $data['shopList'],
                 'totalAmount' => $levelProms['price']['finalPrice'],
+                'promsPrice' => $levelProms['price']['promsPrice'],
+                'currentProms' => json_encode($currentProms),
+                'price' => $levelProms,
+                'userAccount' => $userAccount,
                 'userId' => $userId
             );
         }
 
         return $data;
+    }
+    public function goodsMoeny($carListData) {
+        $goodsInfo = array(
+            'shopList'=> array(),
+            'totalCount'=> 0,
+            'totalAmount'=> 0
+        );
+        if (empty($carListData)) {
+            return $goodsInfo;
+        }
+
+        $carListData = json_decode(json_encode($carListData));
+
+        foreach($carListData as $key => $carItem) {
+            $carItemID = $carItem->id;
+            $carItemCount = $carItem->count;
+            $goodsItem = $this->singleData($carItemID);
+            $goodsItem['count'] = (int)$carItemCount;
+
+            // 總計
+            $goodsInfo['totalAmount'] += ($carItemCount * $goodsItem['amount']);
+            $goodsInfo['totalCount'] += $carItemCount;
+            array_push($goodsInfo['shopList'], $goodsItem);
+        }
+
+        return $goodsInfo;
     }
     // 前台 - 加入購物車
     public function addShopCar(Request $request, $id) {
@@ -335,7 +368,7 @@ class GoodsController extends Controller
         };
 
         if ($Create) {
-            $this->response['message'] = '建立成功';
+            $this->response['message'] = $isEdit ? '編輯成功' : '建立成功';
         } else {
             $this->response['message'] = '建立失敗';
         }

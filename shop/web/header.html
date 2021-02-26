@@ -108,9 +108,8 @@
             })
         });
         $('#openCar').on('click', function() {
-                $('#shopCar').show();
                 $("#shopCar").load("/web/components/shopCar", function() {
-                    console.log('shopCar load');
+                    $('#shopCar').show();
                 });
             });
     </script>

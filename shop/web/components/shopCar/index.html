@@ -91,6 +91,14 @@
     .checkout-form .list-input {
         margin-bottom: 10px;
     }
+    .vip-info {
+        float: left;
+        line-height: 20px;
+        margin-top: 69px;
+    }
+    /* .level-list {
+
+    } */
     .tip-red {
         margin-left: 10px;
         color: #F00;
@@ -139,8 +147,8 @@
                 <div class="list-input">配送方式： <input type="radio" id="sendWay" checked="checked"><label for="sendWay">貨到付款</label></div>
                 <button id="checkoutSubmit" class="button pink">結帳</button>
             </form>
+            <div id="vipInfo" class="vip-info"></div>
         </div>
-        <div id="vipInfo" class="vip-info"></div>
         <br><hr />
         <p class="shop-table-title">購物項目：</p>
         <table id="shopCarTable" class="shop-car">
@@ -166,7 +174,6 @@
                 url:"/api/haix/goods/car/show",
                 type: "GET",
                 success:function(res){
-                    console.log(res);
                     errorHandle(res);
                     if (!res || !res.data) {
                         return;
@@ -209,23 +216,45 @@
                     }
                     // 有優惠顯示購物金額
                     Object.keys(price).forEach(function(itemName) {
-                        // console.log(itemName, 'itemName');
                         var itemDom =$('#checkoutForm #' + itemName)[0];
                         if (itemDom) {
                             $(itemDom).text('$' + price[itemName]);
                         }
                     });
                     // 顯示會員等級
-                    // if (userLevel) {
-                    //     if (userLevel.offer !== 'Y') {
-                    //         $('#vipInfo').text('目前會員等級：' userLevel.levelName);
-                    //         return;
-                    //     }
-                    //     var contentText = userLevel.levelName + ":" + 
-                        
-                    // }
+                    if (userLevel) {
+                        var offerInfo = _this.offerInfo(userLevel);
+                        if (userLevel.offer === 'Y') {
+                            $('#vipInfo').append(offerInfo);
+                            return;
+                        }
+                    };
                 }}
             );
+        },
+        offerType: {
+            'A': '滿額折扣送',
+            'B': '固定折扣％數'
+        },
+        offerInfo: function(item) {
+            var _this = this;
+            var offerText = '';
+            var offerContent = $('<div class="level-info-msg"><div>');
+                offerContent.append('<div class="level-list">會員等級:' + item.levelName + '</div');
+            switch (item.offerType) {
+                case 'A':
+                    offerText = _this.offerType[item.offerType] + 
+                        '(滿額＄' + item.full + ', 折扣$' + item.discount +')';
+                    break;
+                case 'B':
+                    offerText = _this.offerType[item.offerType] + '(折扣'+ item.present +'%)'
+                    break;
+                default:
+                    offerText = '無優惠';
+                    break;
+            }
+
+            return offerContent.append('<div class="level-list">' + offerText + '</div>');
         },
         setShopCarTable: function(data, totalAmount, totalCount) {
             var _this = this;
@@ -285,7 +314,10 @@
                                 '<p>'+ list.info +'</p>'+
                             '</div>'+
                         '</td>'+
-                        '<td>數量： <span>x'+ list.count +'</span></td>'+
+                        '<td>'+
+                            '<div>購買數量： <span>x'+ list.count +'</span></div>'+
+                            '<div class="tip-red">(商品實際剩餘數量： <span>x'+ list.total +')</span></div>'+
+                        '</td>'+
                         '<td class="prd-price">'+
                             '<p>單價：'+
                                 '<span>$<b>'+ list.amount +'</b></span>'+
@@ -300,20 +332,25 @@
             return trContent;
         },
         setSubmit: function() {
+            var _this = this;
             $('#checkoutSubmit').on('click', function(e){
                 e.preventDefault();
                 var postData = {};
+                var isError = false;
                 $('#checkoutForm').find('input[type="text"]').each(function(index, dom) {
                     var filedName = $(this).attr('name');
                     var filedValue = $(this).val();
                     if (!filedValue) {
                         alert($(this).siblings('label').text() + '請填寫欄位');
+                        isError = true;
                         return false;   // 跳脫 each
                     }
 
                     postData[filedName] = filedValue;
                 });
-                console.log(postData, 'postData');
+                if (isError) {
+                    return;
+                }
                 $.ajax({
                     url:"/api/haix/goods/buy/",
                     type: "POST",
@@ -321,8 +358,8 @@
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
                     success:function(res){
+                        alert(res.message);
                         if (res.code !== 200) {
-                            alert(res.message);
                             return;
                         }
                         // $('#openCar').click();
