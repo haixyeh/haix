@@ -252,6 +252,20 @@ button.green:hover {
     background: #598844;
 }
 
+button.blue {
+    display: inline-block;
+    background: #1D72AF;
+    border: none;
+    padding: 10px 25px 10px 25px;
+    color: #FFF;
+    box-shadow: 1px 1px 5px #2484C9;
+    border-radius: 3px;
+    text-shadow: 1px 1px 1px #165B8B;
+    cursor: pointer;
+}
+button.blue:hover {
+    background: #258CD6;
+}
 button.minsize {
     padding: 5px 15px;
 }

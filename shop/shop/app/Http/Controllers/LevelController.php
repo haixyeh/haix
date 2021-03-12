@@ -42,13 +42,18 @@ class LevelController extends Controller
     }
 
     // 等級優惠金額(數據)
-    public function promsPrice($levelId, $totalAmount) {
-        $levelList = $this->mapLevelLast($levelId);
+    public function promsPrice($levelId, $totalAmount, $order = null) {
+        if (empty($order)) {
+            $levelList = $this->mapLevelLast($levelId);
+        } else {
+            $levelList = json_decode($order->currentProms);
+        }
+
         $price = $this->priceData($levelList, $totalAmount);
 
         $result = array(
             'price'=> $price,
-            'levelName'=>$levelList['levelName']
+            'levelName'=>$order ?  null : $levelList['levelName']
         );
         return $result;
     }
@@ -64,9 +69,9 @@ class LevelController extends Controller
         );
 
         // 等級尚未設定優惠
-        if (empty($levelList) || $levelList['offer'] !== 'Y' || $totalAmount <= $levelList['full']) {
-            if ($levelList['offerType'] === 'A') {
-                $result['toFullPrice'] = $levelList['full'] - $totalAmount;
+        if (empty($levelList) || $levelList->offer !== 'Y' || $totalAmount < $levelList->full) {
+            if ($levelList->offerType === 'A') {
+                $result['toFullPrice'] = $levelList->full - $totalAmount;
             }
             $result['finalPrice'] = $totalAmount;
 
@@ -75,18 +80,18 @@ class LevelController extends Controller
 
         // 總結計算優惠金額
         $promsPrice = 0;
-        switch ($levelList['offerType']) {
+        switch ($levelList->offerType) {
             case 'A':
-                if ($totalAmount > $levelList['full']) {
-                    $countsDiscount = floor($totalAmount / $levelList['full']);
+                if ($totalAmount >= $levelList->full) {
+                    $countsDiscount = floor($totalAmount / $levelList->full);
                 } else {
                     $countsDiscount = 0;
                 }
                 
-                $promsPrice =  $levelList['discount'] * $countsDiscount;
+                $promsPrice =  $levelList->discount * $countsDiscount;
                 break;
             case 'B':
-                $promsPrice =  (float) number_format($totalAmount * ($levelList['present']/100), 2);
+                $promsPrice = (float) floor($totalAmount * ($levelList->present)/100);
                 break;
             default:
                 $promsPrice = 0;

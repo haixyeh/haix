@@ -68,9 +68,14 @@ class UserInfoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function showData(Request $request)
+    public function showData(Request $request, $enterUser = array())
     {
-        $user = $this->UserGet($request);
+        if (empty($enterUser)) {
+            $user = $this->UserGet($request);
+        } else {
+            $user = $enterUser;
+        }
+        
         $userInfo = array(
             'account' => $user['name'],
             'firstName' => '',
@@ -118,7 +123,7 @@ class UserInfoController extends Controller
         $user = $this->UserGet($request);
         $data = $request->all();
         $validator = Validator::make($data, [
-            'account' => ['required', 'string', 'min:6', 'max:15'],
+            'account' => ['required', 'string', 'min:4', 'max:15'],
             'email' => ['required', 'string', 'email', 'max:50'],
             'firstName'=> ['required', 'string', 'max:10'],
             'lastName' => ['required', 'string', 'max:20'],
@@ -127,6 +132,9 @@ class UserInfoController extends Controller
         ],[
             'email.required' => '請填寫郵件信箱',
             'email.max' => '郵件帳號：最多不超過50字',
+            'account.required' => '帳號未填',
+            'account.min' => '帳號：4~15字元',
+            'account.max' => '帳號：4~15字元',
             'firstName.required' => '請填寫姓氏帳號：請輸入6～15字元',
             'firstName.max' => '最多填寫10個字',
             'lastName.required' => '請填名字',

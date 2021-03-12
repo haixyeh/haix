@@ -186,7 +186,6 @@
             
 
             $("#header").load("/web/header.html", function() {
-                $('body').show();
                 $.ajax({
                     url:"/api/haix/goods/list",
                     type: "GET",
@@ -205,6 +204,9 @@
                         setGoodsTable();
                     }}
                 );
+                setTimeout(function() {
+                    $('body').show();
+                }, 100);
             });
          });
     </script>

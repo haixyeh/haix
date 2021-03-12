@@ -79,7 +79,8 @@
                 N: '未接受',
                 Y: '已接受（未出貨）',
                 S: '出貨中',
-                E: '完成訂單（已完成）'
+                E: '完成訂單（已完成）',
+                L: '完成訂單（強制取消再退貨）'
             },
             tabBindMethod: function(e) {
                 e.preventDefault();
@@ -139,6 +140,9 @@
                 // 已完成
                 if (status === 'E') {
                     return goodsStatusOptions.text('訂單已完成');
+                }
+                if (status === 'L') {
+                    return goodsStatusOptions.text('訂單已完成(強制取消再退貨)');
                 }
                 
                 var select = $('<select class="goods-status" data-id="'+ id +'"></select>');

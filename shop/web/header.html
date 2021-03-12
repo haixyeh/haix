@@ -2,14 +2,21 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="/web/css/header.css">
-    <script src="/web/js/common.js"></script>
+    <link rel="stylesheet" href="/web/css/jquery-ui.css">
+    <script src="/web/js/common.js"></script> 
 </head>
 <body>
     <div class="header">
         <div class="header-top clearfix">
             <div id="shopCar"></div>
-            <button id="openCar" class="button gray">查看購物車</button>
+            <button id="userMsg" class="button blue float-right" style="display: none;">
+                用戶信息
+            </button>
+            <button id="openCar" class="button gray" style="display: none;">查看購物車</button>
             <a id="goHome" href="/web" class="go-home" style="display: none;">返回首頁</a>
+            <div id="userMsgDialog" style="display: none;">
+                <div class="content"></div>
+            </div>
         </div>
         <div class="header-mid clearfix">
             <a href="/web">
@@ -22,6 +29,7 @@
                 </div>
                 <div id="isLogin">
                     <div id="welcome"></div>
+                    <div id="coupon"></div>
                     <div id="logOut" class="logout">登出</div>
                 </div>
             </div>
@@ -30,6 +38,7 @@
     <div class="nav-wrap">
         <div id="nav" class="nav clearfix"></div>
     </div>
+    <script src="/web/js/jquery-ui.js"></script>
     <script>
         $(document).ready(function(){
             $.ajax({
@@ -42,8 +51,67 @@
                             location.href = '/web';
                             return;
                         }
+                        // 允許開啟查看購物車功能
+                        $('#openCar').show();
+                        // 允許開啟用戶信息
+                        $('#userMsg').show();
+
+                        if (res.data.isSeeMsg === 'N') {
+                            $('#userMsg').addClass('has-new');
+                        }
+                        
+                        $('#userMsg').bind('click', function() {
+                            $.ajax({
+                                url:"/api/haix/getMessage",
+                                type: "GET",
+                                success:function(res){
+                                    $('#userMsgDialog .content').html('');
+                                    // 訊息內容設定
+                                    var content = $('<div></div>');
+                                    res.data.forEach(function(item, index) {
+                                        var newDiv = $('<div class="news-item clearfix"></div>');
+                                        var del = $('<button class="msg-del-btn button gray minsize float-right" title="移除">X</button>');
+                                        newDiv.append(item);
+                                        newDiv.append(del);
+                                        del.bind('click', function(e) {
+                                            e.preventDefault();
+                                            $.ajax({
+                                                url:"/api/haix/message/" + index,
+                                                type: "PUT",
+                                                success:function(res){
+                                                    $('#userMsg').click();
+                                                }
+                                            });
+                                        });
+                                        
+                                        content.append(newDiv);
+                                    });
+                                    $(content).appendTo($('#userMsgDialog .content'));
+
+                                    $('#userMsg').removeClass('has-new');
+                                }
+                            });
+                            $("#userMsgDialog").dialog({
+                                resizable: false,
+                                width: 500,
+                                height: 500,
+                                modal: true,
+                                buttons: {
+                                    "關閉": function() {
+                                        $(this).dialog("close");
+                                    },
+                                    // Cancel: function() {
+                                    //     $(this).dialog("close");
+                                    // }
+                                }
+                            });
+                        });
+                        
                         $('#unLoginShow').hide();
                         $('#welcome').html('<div class="welcome">歡迎光臨<span>' + res.data.user +'</span></div>');
+                        if (res.data.coupon) {
+                            $('#coupon').html('<div class="coupon">購物金<span>$' + res.data.coupon +'</span></div>');
+                        }
                     } else {
                         $('#isLogin').hide();
                     }
@@ -61,13 +129,13 @@
             );
 
             $('#logOut').on('click', function() {
-                    $.ajax({
+                $.ajax({
                     url:"/api/haix/out",
                     type: "GET",
                     success:function(res){
                         errorHandle(res, true);
-                    }}
-                );
+                    }
+                });
             });
             /* - only path,  */
             var showhideMap = {

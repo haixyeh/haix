@@ -101,7 +101,9 @@
          $(document).ready(function(){
             var userLoginType = 'account';
             $("#header").load("/web/header.html", function() {
-                $('body').show();
+                setTimeout(function() {
+                    $('body').show();
+                }, 100);
             });
             // 驗證碼圖片api
             var captchImgMethod = function() {

@@ -22,6 +22,9 @@ Route::group(['middleware' => ['haixauth:api']], function(){
     Route::put('/haix/goods/order/{id}','OrdersController@cancelOrder'); // 取消訂單
     Route::post('/haix/goods/order/fix/goods','OrdersController@fixGoods'); // 貨品修改
     Route::post('/haix/goods/order/reback','RebackController@apply'); // 退貨申請
+    Route::get('/haix/goods/reback/{orderNumber}','RebackController@showSingle'); // 退貨申請
+    Route::get('/haix/getMessage', 'UsersController@getMessage'); // 獲得訊息
+    Route::put('/haix/message/{id}', 'UsersController@delMsg'); // 獲得訊息
 });
 
 // 後台用戶登入
@@ -60,4 +63,5 @@ Route::group(['middleware' => ['adminauth:api']], function(){
     Route::get('/admin/goods/order/apply/list','RebackController@show'); // 新增等級設定
     Route::post('/admin/goods/order/apply/cross','RebackController@cross'); // 成功 - 退貨申請
     Route::post('/admin/goods/order/apply/cancel','RebackController@cancel'); // 取消 - 退貨申請
+    Route::post('/admin/goods/order/back/finish','RebackController@finish'); // 取消 - 退貨申請
 });

@@ -22,9 +22,16 @@ body {
 }
 .header-mid {
     height: 133px;
+    text-align: right;
+}
+.header-mid::after {
+    display: inline-block;
+    content: '';
+    width: 0px;
+    height: 100%;
+    vertical-align: middle;
 }
 .go-home {
-    float: right;
     color: #FFF;
     text-decoration: none;
     padding: 7px;
@@ -47,13 +54,13 @@ body {
     font-family: 'KulminoituvaRegular';
 }
 .login-wrap {
-    float: right;
+    display: inline-block;
     margin-right: 20px;
-    padding: 20px 20px 0;
     text-align: center;
+    vertical-align: middle;
 }
 .login-wrap .logout {
-    margin-top: 25px;
+    margin-top: 15px;
     display: inline-block;
     width: 100px;
     border: 1px solid #1d72af;
@@ -69,10 +76,19 @@ body {
     background: #333;
 }
 .login-wrap .welcome {
-    letter-spacing: 10px;
+    /* text-align: right; */
+    letter-spacing: 5px;
+}
+.login-wrap .coupon {
+    margin-top: 10px;
+    letter-spacing: 5px;
+}
+.login-wrap .coupon span {
+    color: #CA9533;
 }
 .login-wrap .welcome span {
-    color: #1d72af;
+    color: #1D72AF;
+    letter-spacing: 3px;
 }
 .regist-btn,
 .login-btn {
@@ -190,4 +206,67 @@ body {
 }
 .gray:hover {
     background: #807a7a;
+}
+button.blue {
+    display: inline-block;
+    background: #1D72AF;
+    border: none;
+    padding: 10px 25px 10px 25px;
+    color: #FFF;
+    box-shadow: 1px 1px 5px #2484C9;
+    border-radius: 3px;
+    text-shadow: 1px 1px 1px #165B8B;
+    cursor: pointer;
+}
+button.blue:hover {
+    background: #258CD6;
+}
+button.minsize {
+    padding: 5px 15px;
+}
+.float-right {
+    position: relative;
+    float: right;
+}
+
+.has-new::before {
+    display: block;
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-radius: 99px;
+    background-color: rgb(204, 61, 61);
+    width: 10px;
+    height: 10px;
+    animation-name: blink;
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-iteration-count: 100;
+}
+@keyframes blink {
+    0% {background-color: rgb(204, 61, 61);}
+    100% {background-color: rgb(253, 4, 4);}
+}
+#userMsgDialog .content {
+    border: 1px solid #8E8E8E;
+}
+.news-item {
+    position: relative;
+    border-bottom: 1px solid #8E8E8E;
+    padding: 15px;
+    font-size: 14px;
+}
+.news-item:last-child {
+    border-bottom: 0;
+}
+.news-item span {
+    color: #1D72AF;
+}
+
+button.msg-del-btn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px;
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Hash;
+use RedisServer;
 use App\Users;
 use App\UserInfo;
 use Illuminate\Http\Request;
@@ -14,12 +15,29 @@ use App\Http\Controllers\LevelController;
 class UsersController extends Controller
 {
     private $response;
+    private $timeNow;
     /**
      * MenuController constructor.
      */
     public function __construct()
     {
         $this->response = $this->normalOutput();
+        $this->timeNow = date("Y-m-d H:i:s" , mktime(date('H')+8, date('i'), date('s'), date('m'), date('d'), date('Y')));
+    }
+
+    // 獲取使用者共用
+    public function UserGet(Request $request)
+    {
+        $session = request()->cookie('SESSION');
+        $users = array([]);
+        if ($session) {
+            $users = Users::where([
+                'api_token' => $session,
+            ])->first();
+            return $users;
+        }
+
+        return response()->json($this->response);
     }
 
     // 註冊
@@ -73,6 +91,12 @@ class UsersController extends Controller
                 'email' => $data['email'],
                 'account' => $data['name'],
             ]);
+
+            $users = Users::where([
+                'name' => $data['name'],
+            ])->first();
+
+            $this->setMessage($users->id, '<span>' . $this->timeNow . '</span>:'.'恭喜註冊成功 - 歡迎使用【黑司生活購物網】');
         } else {
             $this->response['message'] = '建立失敗';
         }
@@ -194,4 +218,63 @@ class UsersController extends Controller
         return response()->json($this->response);
     }
 
+    // 設定通知用戶信息
+    public function setMessage($userId = null, $msg = null) {
+        if (empty($msg) || empty($userId)) {
+            return false;
+        }
+        $redis = RedisServer::connection();
+        $userMsg = json_decode($redis->get('user'. $userId . 'msg'));
+
+        if (empty($userMsg)) {
+            $userMsg = array();
+        }
+
+        array_unshift($userMsg, $msg);
+
+        $over = $redis->set('user'. $userId . 'msg', json_encode($userMsg));
+
+        if ($over) {
+            $redis->set('user'. $userId . 'seeMsg', 'N');
+            return true;
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+    // get Msg 獲取用戶訊息
+    public function getMessage(Request $request)
+    {
+        $redis = RedisServer::connection();
+        $users = $this->UserGet($request);
+        $userMsg = json_decode($redis->get('user'. $users->id . 'msg'));
+
+        if (empty($userMsg)) {
+            return response()->json($this->response);
+        }
+
+        $data = json_decode($redis->get('user'. $users->id . 'msg'));
+        $redis->set('user'. $users->id . 'seeMsg', 'Y');
+        $this->response['data'] = $data;
+
+        return response()->json($this->response);
+    }
+    public function delMsg(Request $request, $id)
+    {
+        $redis = RedisServer::connection();
+        $users = $this->UserGet($request);
+        $userMsg = json_decode($redis->get('user'. $users->id . 'msg'));
+
+        if (empty($userMsg)) {
+            $this->response['code'] = 2033;
+            $this->response['msg'] = '已無訊息可刪';
+            return response()->json($this->response);
+        }
+        array_splice($userMsg, $id, 1);
+
+        $redis->set('user'. $users->id . 'msg', json_encode($userMsg));
+
+        return response()->json($this->response);
+    }
 }

@@ -127,71 +127,74 @@
     <script>
          $(document).ready(function(){
             var userLoginType = 'account';
-            $("#header").load("/web/header.html", function() {
-                $('body').show();
-            });
-            // $('#fixPassword').on('click', function() {
-            //     var aaa = $('')
-            //     $('#password-fix-wrap').show();
-            // });
-            // 驗證碼圖片api
-            var captchImgMethod = function() {
-                $.ajax({
-                    url:"/api/haix/flat?" + Math.random(),
-                    success:function(result){
-                        $("#captchaImg").attr('src', result.img);
-                    }}
-                );
-            };
-            // 獲取會員資料
-            $.ajax({
-                url:"/api/haix/userInfo",
-                type: "GET",
-                dataType: "json",
-                contentType: "application/json;charset=utf-8",
-                success:function(res){
-                    // function in header load
-                    errorHandle(res, true);
-                    if (res.data) {
-                        for (const key in res.data) {
-                            if (res.data.hasOwnProperty(key)) {
-                                var value = res.data[key];
-                                $('#' + key).val(value);
-                            }
-                        }
-                    }
-                }}
-            );
             
-            // 初次載入顯示驗證碼
-            captchImgMethod();
-            // 點擊產生驗證碼
-            $("#captchaImg").on('click', function() {
-                captchImgMethod();
-            });
-            // 送出修改
-            $("#submit").click(function(){
-                var inputFiled = $('.info-wrap-user').find('.input-wrap input');
-                var dataEdit = {};
-                $.each(inputFiled, function(item) {
-                    var itemDom = inputFiled[item];
-                    dataEdit[itemDom.id] = itemDom.value;
-                });
+            var init = function() {
+                // 驗證碼圖片api
+                var captchImgMethod = function() {
+                    $.ajax({
+                        url:"/api/haix/flat?" + Math.random(),
+                        success:function(result){
+                            $("#captchaImg").attr('src', result.img);
+                        }}
+                    );
+                };
+                // 獲取會員資料
                 $.ajax({
-                    url:"/api/haix/userInfo/edit",
-                    data: JSON.stringify(dataEdit),
-                    type: "POST",
+                    url:"/api/haix/userInfo",
+                    type: "GET",
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
-                    success:function(result){
-                        alert(result.message || 'error');
-                        if (result.code === 200) {
-                            window.location = '/web';
+                    success:function(res){
+                        // function in header load
+                        errorHandle(res, true);
+                        if (res.data) {
+                            for (const key in res.data) {
+                                if (res.data.hasOwnProperty(key)) {
+                                    var value = res.data[key];
+                                    $('#' + key).val(value);
+                                }
+                            }
                         }
                     }}
                 );
+                
+                // 初次載入顯示驗證碼
+                captchImgMethod();
+                // 點擊產生驗證碼
+                $("#captchaImg").on('click', function() {
+                    captchImgMethod();
+                });
+                // 送出修改
+                $("#submit").click(function(){
+                    var inputFiled = $('.info-wrap-user').find('.input-wrap input');
+                    var dataEdit = {};
+                    $.each(inputFiled, function(item) {
+                        var itemDom = inputFiled[item];
+                        dataEdit[itemDom.id] = itemDom.value;
+                    });
+                    $.ajax({
+                        url:"/api/haix/userInfo/edit",
+                        data: JSON.stringify(dataEdit),
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(result){
+                            alert(result.message || 'error');
+                            if (result.code === 200) {
+                                window.location = '/web';
+                            }
+                        }}
+                    );
+                });
+            }
+            $("#header").load("/web/header.html", function() {
+                setTimeout(function() {
+                    $('body').show();
+                }, 100);
+                init();
             });
          });
+         
     </script>
 </body>
 </html>

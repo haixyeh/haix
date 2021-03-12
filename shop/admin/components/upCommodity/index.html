@@ -91,7 +91,6 @@ input[type="file"] {
             </div>
             <div class="input-wrap">
                 <label for="info"><span>商品描述</span></label>
-                <!-- <input type="text" id="info" name="info" placeholder="請輸入商品描述"> -->
                 <textarea id="info" name="info" rows="10" cols="50" placeholder="請輸入商品描述"></textarea>
             </div>
             <div class="input-wrap">
@@ -136,6 +135,7 @@ var isEdit = false;
     var goods = {
         isEdit: false,
         id: null,
+        isForceRemoval: false,
         getParameterByName: function(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -163,6 +163,9 @@ var isEdit = false;
                     if (!res || !res.data || !Object.keys(res.data).length) {
                         return;
                     }
+                    // 強制下架狀態
+                    _this.isForceRemoval = (res.data.forcedRemoval === 'Y');
+                    console.log(_this.isForceRemoval, '_this.isForceRemoval');
                     _this.isEdit = true;
                     Preview.change_file(JSON.parse(res.data.images));
                     Object.keys(res.data).forEach(function(item) {
@@ -243,6 +246,9 @@ var isEdit = false;
                 return;
             }
             if (goods.isEdit) {
+                if(goods.isForceRemoval && confirm('是否解除強制下架？')){
+                    formData.append('forcedRemoval', 'N');
+                }
                 $.ajax({
                     url:"/api/admin/goods/edit/"+ goods.id,
                     data: formData,

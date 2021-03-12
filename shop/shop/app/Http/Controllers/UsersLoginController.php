@@ -15,12 +15,14 @@ class UsersLoginController extends Controller
 {
     private $response;
     private $users;
+    private $timeNow;
     /**
      * MenuController constructor.
      */
     public function __construct()
     {
         $this->response = $this->normalOutput();
+        $this->timeNow = date("Y-m-d H:i:s" , mktime(date('H')+8, date('i'), date('s'), date('m'), date('d'), date('Y')));
     }
 
     // 選擇登入機制 （帳號 or email）
@@ -86,7 +88,6 @@ class UsersLoginController extends Controller
     // init 基本資料
     public function UserInit (Request $request)
     {
-        // RedisServer::set('name', 'guest');
         $session = request()->cookie('SESSION');
         $reslut = array(
             'is_login'=> 'N',
@@ -94,14 +95,18 @@ class UsersLoginController extends Controller
             'menu' => array(),
         );
         if ($session) {
+            $redis = RedisServer::connection();
             $users = $this->UserGet($request);
-            
+
             if (!$users) {
                 $reslut['is_login'] = 'N';
             }
             if ($users) {
+                $userId = $users->id;
                 $reslut['is_login'] = 'Y';
+                $reslut['coupon'] = $users->coupon;
                 $reslut['user'] = $users->name;
+                $reslut['isSeeMsg'] = $redis->get('user'. $users->id . 'seeMsg');
             }
         }
         $reslut['menu'] = array(

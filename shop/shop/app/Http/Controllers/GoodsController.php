@@ -65,11 +65,16 @@ class GoodsController extends Controller
         return $this->success($this->shopCarData($request));
     }
     // 數據 - 購物車資料
-    public function shopCarData(Request $request, $isForData = false, $goodsListData = []){
-        $user = UserInfoController::instance()->UserGet($request);
+    public function shopCarData(Request $request, $isForData = false, $goodsListData = [], $enterUser = array(), $order = null){
+        if (empty($enterUser)) {
+            $user = UserInfoController::instance()->UserGet($request);
+        } else {
+            $user = $enterUser;
+        }
         $userAccount = $user->name;
         $userId = $user->id;
         $userLevel = LevelController::instance()-> mapLevelLast($user->level);
+
         if (empty($goodsListData)) {
             $carListData = json_decode(RedisServer::get('user'. $userId . 'car'));
         } else {
@@ -79,7 +84,7 @@ class GoodsController extends Controller
         $levelProms = 0;
         $data = array(
             'shopList' => array(),
-            'userInfo' => UserInfoController::instance()->showData($request),
+            'userInfo' => UserInfoController::instance()->showData($request, $enterUser),
             'totalCount' => 0,
             'totalAmount' => 99999,
             'levelProms' => $levelProms,
@@ -90,8 +95,11 @@ class GoodsController extends Controller
         $data['totalCount'] = $goodsInfo['totalCount'];
         $data['totalAmount'] = $goodsInfo['totalAmount'];
         $data['shopList'] = $goodsInfo['shopList'];
-
-        $levelProms = LevelController::instance()->promsPrice($user->level, $data['totalAmount']);
+        if (empty($order)) {
+            $levelProms = LevelController::instance()->promsPrice($user->level, $data['totalAmount']);
+        } else {
+            $levelProms = LevelController::instance()->promsPrice($user->level, $data['totalAmount'], $order);
+        }
         $data['levelProms'] = $levelProms;
 
         if ($isForData) {
@@ -275,7 +283,7 @@ class GoodsController extends Controller
                     break;
             }
             // 不顯示強至下架資訊
-            unset($list[$key]['forcedRemoval']);
+            // unset($list[$key]['forcedRemoval']);
             if ($list[$key]['isOpen'] === 'P') {
                 array_push($start, $list[$key]);
             }
@@ -295,7 +303,7 @@ class GoodsController extends Controller
 
         return $newData;
     }
-    // 後台, 新增商品
+    // 後台, 新增or編輯 商品
     public function create(Request $request, $id = null)
     {
         $uploadIsReq = 'required';
@@ -357,6 +365,10 @@ class GoodsController extends Controller
             'isRecommon'=>$data['isRecommon'],
             'images'=>json_encode($imagesPath)
         ]);
+
+        if(array_key_exists('forcedRemoval', $data)) {
+            $updataAarray['forcedRemoval'] = $data['forcedRemoval'];
+        }
 
         if ($isEdit) {
             if (!$imagesPath) {

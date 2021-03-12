@@ -84,6 +84,9 @@
     .order-list-wrap .td-memo span {
         color: #7D9A9E;
     }
+    button.finish-btn {
+        display: block;
+    }
 </style>
 <div>
     <h3 class="title">退貨管理</h3>
@@ -151,7 +154,8 @@
             'E': '訂單已完成',
             'R': '退貨申請中',
             'T': '待確認退貨商品',
-            'F': '退貨完成'
+            'F': '退貨完成',
+            'L': '訂單已完成(強制取消退貨申請)',
         },
         rebackStatusList: {
             'C': '已取消申請',
@@ -168,7 +172,7 @@
                     field: {
                         'created_at': '申請日期',
                         'orderNumber': '訂單號', 
-                        'goods': '退貨商品',
+                        'goodsIndo': '退貨商品',
                         'rebackAll': '全部退貨',
                         'rebackStatus': '退貨狀態',
                         'reason': '退貨原因',
@@ -238,12 +242,29 @@
                             };
 
                             // 取消申請按鈕
-                            var applyCancelBtn = rebackStatus === 'N' ? $('<button class="gray button">取消申請</button>') : null;
-                            if (applyCancelBtn) {
-                                applyCancelBtn.bind('click', function(e) {
+                            var ButtonText = '取消申請';
+                            if (rebackStatus === 'Y') {
+                                ButtonText = '取消此筆退貨';
+                            }
+                            var applyCancelBtn = (rebackStatus === 'N' || rebackStatus === 'Y') ? $('<button class="gray button">' + ButtonText +'</button>') : null;
+
+                            var lockCancelBtn = (rebackStatus === 'Y') ? $('<button id="lockBtn" class="pink button">強制取消再退貨</button>') : null;
+                            
+                            var cancelMethod = function(e) {
                                     e.preventDefault();
+
+                                    var id = $(this).attr('id');
+                                    var alertTtitle = "確認「取消」該訂單號：『" + trList.orderNumber + "』申請？";
+
+                                    if (rebackStatus === 'Y') {
+                                        alertTtitle = "確認「取消」該訂單號：『" + trList.orderNumber + "』退貨狀態？"
+                                    }
+                                    if (id === 'lockBtn') {
+                                        alertTtitle = "確認「取消」該訂單號：『" + trList.orderNumber + "』並強制取消退貨狀態(往後不能進行此項退貨申請)嘛？"
+                                    }
+
                                     swal({
-                                        title: "確認「取消」該訂單號：『" + trList.orderNumber + "』申請？",
+                                        title: alertTtitle,
                                         text: "輸入取消原因",
                                         type: "input",
                                         showCancelButton: true,
@@ -262,6 +283,9 @@
                                             id: trList.id,
                                             memo: inputValue
                                         };
+                                        if (id === 'lockBtn') {
+                                            postData['lock'] = 'Y';
+                                        }
                                         $.ajax({
                                             url:"/api/admin/goods/order/apply/cancel",
                                             type: "POST",
@@ -287,10 +311,69 @@
                                             }}
                                         );
                                     });
-                                });
+                                }
+                            if (applyCancelBtn) {
+                                applyCancelBtn.bind('click', cancelMethod);
                             };
 
-                            return [applyCrossBtn, applyCancelBtn];
+                            if (lockCancelBtn) {
+                                lockCancelBtn.bind('click', cancelMethod);
+                            }
+
+                            var finishBtn = (rebackStatus === 'Y') ? $('<button class="finish-btn blue button">退貨完成</button>') : null;
+
+                            if (finishBtn) {
+                                finishBtn.bind('click', function(inputValue) {
+                                    
+                                    swal({
+                                            title: "退貨完成？",
+                                            text: "訂單號『" + trList.orderNumber + "』: 請確認已收到退貨商品",
+                                            type: "input",
+                                            animation: "slide-from-top",
+                                            inputPlaceholder: "通知客戶訊息（非必填）",
+                                            showCancelButton: true,
+                                            closeOnConfirm: false,
+                                            showLoaderOnConfirm: true,
+                                        },
+                                        function(inputValue){
+                                            if (inputValue === false) return false;
+                                            var postData = {
+                                                id: trList.id,
+                                                memo: inputValue
+                                            };
+
+                                            if (!inputValue) {
+                                                delete postData['memo'];
+                                            }
+
+                                            $.ajax({
+                                                url:"/api/admin/goods/order/back/finish",
+                                                type: "POST",
+                                                data: JSON.stringify(postData),
+                                                dataType: "json",
+                                                contentType: "application/json;charset=utf-8",
+                                                success:function(res){
+                                                    if (res.code !== 200) {
+                                                        swal("取消退貨失敗：",  res.message,"error");
+                                                        return;
+                                                    }
+                                                    // succse
+                                                    swal({
+                                                        title: "已完成退貨, 以及退款購物金",
+                                                        type: "success"
+                                                    },
+                                                    function(clickEvent) {
+                                                        if (clickEvent) {
+                                                            _this.getApplyList();
+                                                        }
+                                                    });
+                                                }}
+                                            );
+                                        });
+                                    });
+                            }
+
+                            return [finishBtn, applyCrossBtn, applyCancelBtn, lockCancelBtn];
                         },
                         'rebackStatus': function(tr, text) {
                             var status = $('<div></div>')    
@@ -318,16 +401,22 @@
                             }
                             return "<div class='check-icon'></div>"
                         },
-                        'goods': function(tr, text) {
+                        'goodsIndo': function(tr, text) {
                             var goodsList = $("<div></div>");
-                            if (!text || trList.rebackStatus === 'Y' ||text === '') {
+                            // var goods = JSON.parse(text);
+                            if (!text || tr.rebackStatus === 'Y' ||text === '') {
                                 return '<div style="text-align:center;">--</div>';
                             }
                             if (!text.length) {
                                 return goodsList;
                             }
-                            text.forEach(function(item) {
-                                $('<div class="goods-item-list clearfix"><div class="item-name">'+ item.name + "</div><span> x " + item.counts +'</span></div>').appendTo(goodsList)
+                            JSON.parse(text).forEach(function(item) {
+                                $('<div class="goods-item-list clearfix">'+
+                                    '<div class="item-name">'+ 
+                                        item.name +
+                                    '</div>'+ 
+                                    '<span> x '+ item.count +'</span>'+ 
+                                '</div>').appendTo(goodsList)
                             });
 
                             return goodsList;

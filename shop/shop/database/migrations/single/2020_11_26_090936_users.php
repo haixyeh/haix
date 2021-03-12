@@ -20,7 +20,8 @@ class Users extends Migration
             $table->string('password');
             $table->string('api_token')->unique();
             $table->string('level')->default('1');
-            $table->integer('cost')->default(0);
+            $table->integer('cost')->default(0);    // 花費金額
+            $table->integer('coupon')->default(0);  // 購物金
             $table->timestamps();
         });
     }

@@ -6,9 +6,11 @@ use App\Order;
 use App\Goods;
 use App\Users;
 use App\Level;
+use App\RebackOrder;
 use RedisServer;
 use Illuminate\Routing\UrlGenerator;
 use App\Http\Controllers\GoodsController;
+use App\Http\Controllers\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Haruncpi\LaravelIdGenerator\IdGenerator;
@@ -26,7 +28,8 @@ class OrdersController extends Controller
      * F: 退貨完成
      */
     private $response;
-    private $goodsMehtod;
+    private $goodsMethod;
+    private $usersMethod;
     private $timeNow;
     /**
      * MenuController constructor.
@@ -34,7 +37,8 @@ class OrdersController extends Controller
     public function __construct()
     {
         $this->response = $this->normalOutput();
-        $this->goodsMehtod = new GoodsController;
+        $this->goodsMethod = new GoodsController;
+        $this->usersMethod = new UsersController;
         $this->timeNow = date("Y-m-d H:i:s" , mktime(date('H')+8, date('i'), date('s'), date('m'), date('d'), date('Y')));
     }
     
@@ -64,7 +68,7 @@ class OrdersController extends Controller
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
-        $goodsCar = $this->goodsMehtod->shopCarData($request, true);
+        $goodsCar = $this->goodsMethod->shopCarData($request, true);
 
         // 購物車空
         if (empty($goodsCar['goodsIndo'])) {
@@ -96,6 +100,10 @@ class OrdersController extends Controller
         
         if ($Create) {
             $this->response['message'] = '建立成功, 您的訂單編號:' . $orderNumber ;
+            $user= Users::where([
+                'name' => $goodsCar['userAccount']
+            ]);
+            $this->usersMethod->setMessage($user->first()->id, '已於[<span>'. $this->timeNow .'</span>] 訂購貨品,' . '訂單編號【' . $orderNumber . '】【貨到付款】');
             RedisServer::set('user'. $goodsCar['userId'] . 'car', '');
         } else {
             $this->response['code'] = 5566;
@@ -162,19 +170,20 @@ class OrdersController extends Controller
     {
         if ($back) {
             $list = Order::having('cancelOrder', '=', 'N')
-                ->having('status', '=', 'R')->orHaving('status', '=', 'T')->orHaving('status', '=', 'F')
-                ->get()->all();
+            ->having('status', '=', 'R')->orHaving('status', '=', 'T')->orHaving('status', '=', 'F')
+            ->orHaving('status', '=', 'L')->orderBy('id', 'desc')->get()->all();
         } else {
             $list = Order::having('cancelOrder', '=', 'N')
-                ->having('status', '!=', 'R')->having('status', '!=', 'T')->having('status', '!=', 'F')
-                ->get()->all();
+            ->having('status', '=', 'N')->orHaving('status', '=', 'Y')
+            ->orHaving('status', '=', 'S')->orHaving('status', '=', 'E')->orHaving('status', '=', 'L')
+            ->orderBy('id', 'desc')->get()->all();
         }
     
         foreach ($list as $key => $item) {
-            $goodsCountID = json_decode($item['goodsIndo']);
+            $goodsIndo = json_decode($item['goodsIndo']);
             $goodsIds = array();
             $goodsCounts = array();
-            foreach ($goodsCountID as $itemKey => $itemInfo) {
+            foreach ($goodsIndo as $itemKey => $itemInfo) {
                 array_push($goodsIds, $itemInfo->id);
                 array_push($goodsCounts, $itemInfo->count);
             }
@@ -186,6 +195,7 @@ class OrdersController extends Controller
             unset($item['goodsIndo']);
             unset($item['userId']);
         }
+
 
         $this->response['data'] = $list;
         
@@ -242,6 +252,12 @@ class OrdersController extends Controller
             $item['goods'] = $goods;
             unset($item['goodsIndo']);
             unset($item['userId']);
+
+            if ($item['status'] === 'R' || $item['status'] === 'T' || $item['status'] === 'F') {
+                $orderNumber = $item->orderNumber;
+                $applyOrder = RebackOrder::where('orderNumber', $orderNumber)->having('rebackStatus', '=', 'N')->first();
+                $item['back'] = isset($applyOrder->goodsIndo) ? json_decode($applyOrder->goodsIndo) : [];
+            }
         }
 
         $this->response['data'] = $list;
@@ -293,6 +309,7 @@ class OrdersController extends Controller
             $originMemo = $order->first()->memo;
             $newMemo = '<p><span>' . $this->timeNow . '</span>:[完成訂單]  </p>';
             $order->update(['memo' => $originMemo . $newMemo ]);
+
             $this->finshOrder($order);
         }
 
@@ -322,14 +339,26 @@ class OrdersController extends Controller
         if ($queryStatus) {
             $hasUpLevel = Level::having('upgradeAmount', '<', $userCost)->orderBy('upgradeAmount', 'desc');
             $lastUpLevel = '';
+           
+            $this->usersMethod->setMessage($user->first()->id, '<span>'. $this->timeNow .'</span> - 完成交易, ' . '訂單編號【' . $orderData['orderNumber'] . '】');
             if ($hasUpLevel) {
                 $lastUpLevel = $hasUpLevel->get()->first();
             }
-            if ((int) $lastUpLevel['id'] !== (int) $user->first()->level ) {
+            $lastLevelId = (int) $lastUpLevel['id'];
+            $currenyLevelId = (int) $user->first()->level;
+            
+            if ($lastLevelId !== $currenyLevelId) {
                 $user->update([
-                    'level' => $lastUpLevel['id']
+                    'level' => $lastLevelId
                 ]);
-                $this->response['message'] = $orderData['account'] . '：用戶晉升至【'. $lastUpLevel['levelName'] . '】';
+                // 用於層級移除或是意外狀況, 否則完成訂單應只有晉升
+                if ($lastLevelId > $currenyLevelId) {
+                    $this->response['message'] = $orderData['account'] . '：用戶晉升至【'. $lastUpLevel['levelName'] . '】';
+                    $this->usersMethod->setMessage($user->first()->id, '<span>'. $this->timeNow .'</span> - ' . '恭喜晉升至【'. $lastUpLevel['levelName'] . '】');
+                } else {
+                    $this->response['message'] = $orderData['account'] . '：用戶降級至【'. $lastUpLevel['levelName'] . '】';
+                    $this->usersMethod->setMessage($user->first()->id, '<span>'. $this->timeNow .'</span> - ' . '降級至【'. $lastUpLevel['levelName'] . '】');
+                }
             }
         }
 
@@ -340,7 +369,6 @@ class OrdersController extends Controller
         }
         return response()->json($this->response);
     }
-
     // 取得api環境
     function evnPath()
     {
@@ -357,6 +385,13 @@ class OrdersController extends Controller
         $order = $this->findOrder($id);
         $mome = '訂單已取消';
         $originMemo = $order->first()->memo;
+
+        if ($order->first()->status !== 'N') {
+            $this->response['code'] = 3213;
+            $this->response['message'] = '訂單不是「未確認」狀態, 無法取消';
+
+            return response()->json($this->response);
+        }
 
         if ($evn === 'admin') {
             $mome = '<p><span>'. $this->timeNow .'</span>:[客服取消訂單]已被取消, 詳細情況請聯繫客服</p>';
@@ -430,6 +465,10 @@ class OrdersController extends Controller
         
         $preGoods = $order->get()->first();
         
+        // 補回貨品數量
+        if ($preGoods) {
+            $this->goodsLoopArray(json_decode($preGoods['goodsIndo']), 'add');
+        }
         // 刪除貨品數量
         $goodsArray = $this->goodsLoopArray(json_decode($data['goods']));
     
@@ -445,7 +484,7 @@ class OrdersController extends Controller
             return response()->json($this->response);
         }
 
-        $goods = $this->goodsMehtod->shopCarData($request, true, $goodsArray);
+        $goods = $this->goodsMethod->shopCarData($request, true, $goodsArray);
         
         try {
             $order->update([
@@ -455,11 +494,6 @@ class OrdersController extends Controller
             $queryStatus = true;
         } catch(Exception $e) {
             $queryStatus = false;
-        }
-
-        // 補回貨品數量
-        if ($preGoods && $queryStatus) {
-            $this->goodsLoopArray(json_decode($preGoods['goodsIndo']), 'add');
         }
 
         if (!$queryStatus) {
