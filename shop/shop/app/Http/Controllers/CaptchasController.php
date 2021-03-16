@@ -14,7 +14,7 @@ class CaptchasController extends Controller
         $expiredAt = now()->addMinute(2);
         // 暫存key
         Cache::put('key', 
-            // 添加验证码生成的key到缓存中
+            // 添加驗證碼 生成的key到緩存中
             $captchaInfo['key']
         , $expiredAt);
 

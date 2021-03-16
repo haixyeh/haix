@@ -96,9 +96,6 @@
         line-height: 20px;
         margin-top: 69px;
     }
-    /* .level-list {
-
-    } */
     .tip-red {
         margin-left: 10px;
         color: #F00;
@@ -132,6 +129,16 @@
                     <label for="">聯絡電話：</label>
                     <input type="text" name="phone">
                 </div>
+                <div id="isCoupon" class="list-input" style="display: none;">是否使用購物金 
+                    <input type="radio" name="isCoupon" id="isCoupon0" value="Y">
+                    <label for="isCoupon0">是</label>
+                    <input type="radio" name="isCoupon" id="isCoupon1" value="N" checked="checked">
+                    <label for="isCoupon1">否</label>
+                </div>
+                <div id="coupon" class="input-wrap" style="display: none;">
+                    <label for="">購物金：</label>
+                    <input type="text" name="coupon">
+                </div>
                 <div class="input-wrap">
                     <label for="">消費總計：</label>
                     <span id="totalAmount"></span>
@@ -144,7 +151,10 @@
                     <label for="">折扣後金額：</label>
                     <span id="finalPrice"></span>
                 </div>
-                <div class="list-input">配送方式： <input type="radio" id="sendWay" checked="checked"><label for="sendWay">貨到付款</label></div>
+                <div class="list-input">配送方式： 
+                    <input type="radio" id="sendWay" checked="checked">
+                    <label for="sendWay">貨到付款</label>
+                </div>
                 <button id="checkoutSubmit" class="button pink">結帳</button>
             </form>
             <div id="vipInfo" class="vip-info"></div>
@@ -182,6 +192,18 @@
                     var levelProms = res.data.levelProms;
                     var userLevel = res.data.userLevel;
                     var price = levelProms.price;
+                    if (res.data.userCoupon && res.data.userCoupon > 0) {
+                        $('#isCoupon').show();
+                        $("[name='isCoupon']").bind('change', function() {
+                            var isOpenCoupon = $(this).val();
+                            // console.log(isOpenCoupon);
+                            if (isOpenCoupon === 'Y') {
+                                $('#coupon').show();
+                            } else {
+                                $('#coupon').hide();
+                            }
+                        })
+                    }
                     _this.userInfo = res.data.userInfo;
                     _this.setShopCarTable(infoData, res.data.totalAmount, res.data.totalCount);
 
@@ -340,6 +362,9 @@
                 $('#checkoutForm').find('input[type="text"]').each(function(index, dom) {
                     var filedName = $(this).attr('name');
                     var filedValue = $(this).val();
+                    if ($(dom).is(":hidden")) {
+                        return;
+                    }
                     if (!filedValue) {
                         alert($(this).siblings('label').text() + '請填寫欄位');
                         isError = true;

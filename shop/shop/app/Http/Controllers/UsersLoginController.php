@@ -32,25 +32,41 @@ class UsersLoginController extends Controller
         $password = Hash::make($data['password']);
 
         if (array_key_exists('account', $data)) {
-            $users = Users::where([
-                'name' => $data['account']
-                ])->first();
+            try {
+                $queryStatus = true;
+                $users = Users::where([
+                    'name' => $data['account'],
+                    ]);
+            } catch (\Throwable $th) {
+                $queryStatus = false;
+            }
         }
 
         if (array_key_exists('email', $data)) {
-            $users = Users::where([
-                'email' => $data['email']
-                ])->first();
+            try {
+                $queryStatus = true;
+                $users = Users::where([
+                    'email' => $data['email']
+                    ]);
+            } catch (\Throwable $th) {
+                $queryStatus = false;
+            }
+        }
+
+        // 無搜尋到帳號
+        if (empty($users->first())) {
+            return null;
         }
 
         $dbpassword = $users->first()->password;
         $booleanValue = Hash::check($data['password'], $dbpassword);
+
         // Hash 確認密碼是否符合
         if (!$booleanValue) {
             return null;
         }
 
-        return $users;
+        return $users->first();
     }
 
     // 用戶登入
@@ -61,8 +77,8 @@ class UsersLoginController extends Controller
         
         $apiToken = Str::random(10);
         
-        if (!$users) {
-            $this->response['code'] = 1006;
+        if (empty($users)) {
+            $this->response['code'] = 1018;
             $this->response['message'] = "帳號/郵件信箱 or 密碼 輸入錯誤";
         }
         if ($users && $users->update(['api_token'=>$apiToken])) {
@@ -71,6 +87,7 @@ class UsersLoginController extends Controller
 
         return response()->json($this->response)->cookie('SESSION', $apiToken, time() + (86400 * 30), "/");
     }
+
     // 獲取使用者共用
     public function UserGet (Request $request)
     {
@@ -79,12 +96,17 @@ class UsersLoginController extends Controller
         if ($session) {
             $users = Users::where([
                 'api_token' => $session,
-            ])->first();
-            return $users;
+            ]);
+            return $users->first();
+        }
+        if (empty($users->first())) {
+            $this->response['code'] = 1017;
+            $this->response['message'] = "找不到此帳號";
         }
 
         return response()->json($this->response);
     }
+
     // init 基本資料
     public function UserInit (Request $request)
     {

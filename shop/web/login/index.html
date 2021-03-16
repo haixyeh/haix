@@ -63,10 +63,18 @@
             padding-right: 30px;
             text-align: right;
         }
+        .get-password {
+            display: none;
+        }
+        .get-pwd-btn {
+            position: absolute;
+            right: 20px;
+            bottom: 0;
+        }
 </style>
 <body style="display: none;">
     <div id="header"></div>
-    <div class="login-wrap-user">
+    <div id="login" class="login-wrap-user">
         <div class="title">會員登入</div>
         <div class="input-wrap clearfix">
             <label for="loginType"><span>選擇登入方式</span></label>
@@ -94,9 +102,23 @@
             <img id="captchaImg" alt="點擊產生圖片">
         </div>
         <div class="submit-wrap">
+            <button id="forgotPwd" class="button gray">忘記密碼</button>
             <button class="button pink" id="submit">登入</button>
         </div>
     </div>
+
+    <div  id="gpw" class="get-password" style="display: none;">
+        <div class="input-wrap account-wrap clearfix">
+            <label for="account"><span>帳號</span></label>
+            <input type="text" id="gpAccount" placeholder="請輸入帳號">
+        </div>
+        <div class="input-wrap email-wrap clearfix">
+            <label for="email"><span>信箱</span></label>
+            <input type="email" id="gpEmail" placeholder="請輸入郵件帳號">
+        </div>
+        <button class="button pink minsize get-pwd-btn" id="getPwdBtn">寄信至Email</button>
+    </div>
+    <script src="/web/js/jquery-ui.js"></script>
     <script>
          $(document).ready(function(){
             var userLoginType = 'account';
@@ -104,6 +126,42 @@
                 setTimeout(function() {
                     $('body').show();
                 }, 100);
+            });
+            $('#forgotPwd').on('click', function() {
+                $("#gpw").dialog({
+                    resizable: false,
+                    width: 300,
+                    height: 300,
+                    modal: true,
+                    buttons: {
+                        "關閉": function() {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+            });
+            $('#getPwdBtn').on('click', function(e){
+                e.preventDefault();
+                var dataJSON = {
+                    name: $('#gpAccount').val(),
+                    email: $('#gpEmail').val()
+                }
+                $.ajax({
+                    url:"/api/haix/getPwd",
+                    data: JSON.stringify(dataJSON),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success:function(result){
+                        if (result.message) {
+                            alert(result.message);
+                        }
+                        if (result.code === 200) {
+                            // window.location = '/web';
+                            $('#gpw').dialog("close");
+                        }
+                    }}
+                );
             });
             // 驗證碼圖片api
             var captchImgMethod = function() {
@@ -123,14 +181,15 @@
             $("#loginType").on('change', function() {
                 userLoginType = this.value;
                 if (this.value === 'email') {
-                    $('.account-wrap').hide();
+                    $('#login .account-wrap').hide();
                 }
                 if (this.value === 'account') {
-                    $('.email-wrap').hide()
+                    $('#login .email-wrap').hide()
                 }
                 $("."+ this.value + "-wrap").show();
             })
             $("#submit").click(function(){
+                $('#loadingOn').show();
                 var dataJSON = {
                     [userLoginType]: $('#'+ userLoginType).val(),
                     password: $('#password').val(),
@@ -143,6 +202,7 @@
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
                     success:function(result){
+                        $('#loadingOn').hide();
                         alert(result.message || 'error');
                         if (result.code === 200) {
                             window.location = '/web';
@@ -150,6 +210,7 @@
                     }}
                 );
             });
+
          });
     </script>
 </body>

@@ -101,6 +101,7 @@ class GoodsController extends Controller
             $levelProms = LevelController::instance()->promsPrice($user->level, $data['totalAmount'], $order);
         }
         $data['levelProms'] = $levelProms;
+        $data['userCoupon'] = $user->coupon;
 
         if ($isForData) {
             $currentProms = array(

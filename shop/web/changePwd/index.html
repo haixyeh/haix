@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="origin-when-cross-origin">
-    <title>會員註冊</title>
+    <title>忘記密碼</title>
     <link rel="stylesheet" href="/web/css/reset.css">
     <script src="/web/js/jquery.min.js"></script>
     <style>
@@ -82,18 +82,14 @@
 <body style="display: none;">
     <div id="header"></div>
     <div class="regist" id="regist">
-        <div class="title">會員註冊</div>
-        <div class="input-wrap">
-            <label for="account"><span>帳號</span></label>
-            <input type="text" name="account" id="account">
-        </div>
+        <div class="title">忘記密碼 - 請重設密碼</div>
         <div class="input-wrap">
             <label for="password"><span>密碼</span></label>
             <input type="password" name="password" id="password">
         </div>
         <div class="input-wrap">
-            <label for="email"><span>郵件</span></label>
-            <input type="email" name="email" id="email">
+            <label for="password"><span>確認密碼</span></label>
+            <input type="password" name="chPassword" id="chPassword">
         </div>
         <div class="input-wrap">
             <label for="captcha" name="captcha"><span>驗證碼</span></label>
@@ -101,12 +97,50 @@
             <label for=""><span></span></label>
             <img id="captchaImg" alt="點擊產生圖片">
         </div>
+        <div class="input-wrap">
+            <label for="account"><span>帳號</span></label>
+            <input type="text" name="account" id="account" disabled>
+        </div>
+        <div class="input-wrap">
+            <label for="email"><span>郵件</span></label>
+            <input type="email" name="email" id="email" disabled>
+        </div>
+
         <div class="submit-wrap">
-            <button id="submit" class="button">註冊</button>
+            <button id="submit" class="button">修改密碼</button>
         </div>
     </div>
     <script>
+        var getUrlParameter = function getUrlParameter(sParam, url) {
+            var sPageURL = url,
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return typeof sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+                }
+            }
+            return false;
+        };
+
         $(document).ready(function(){
+            var urlSearch = new window.URLSearchParams(window.location.search);
+            var params = urlSearch.get('params');
+            if (!params) {
+                alert('連結無效');
+                location.href = '/web/';
+            }
+            params = atob(params);
+            var email = getUrlParameter('email', params);
+            var name = getUrlParameter('name', params);
+            var token = getUrlParameter('token', params);
+            $('#account').val(name);
+            $('#email').val(email);
+
             $("#header").load("/web/header.html", function() {
                 $('body').show();
             });
@@ -126,21 +160,24 @@
                 captchImgMethod();
             });
             $("#submit").click(function(){
-                $('#loadingOn').show();
+                if ($('#password').val() !== $('#chPassword').val()) {
+                    alert('確認密碼與密碼不相同！！');
+                    return;
+                }
                 var dataJSON = {
-                    name: $('#account').val(),
+                    account: $('#account').val(),
                     password: $('#password').val(),
                     email: $('#email').val(),
-                    captcha: $('#captcha').val()
+                    captcha: $('#captcha').val(),
+                    token: token
                 }
                 $.ajax({
-                    url:"/api/haix",
+                    url:"/api/haix/changePwd",
                     data: JSON.stringify(dataJSON),
                     type: "POST",
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
                     success:function(result){
-                        $('#loadingOn').hide();
                         alert(result.message || 'error');
                         if (result.code === 200) {
                             window.location = '/web/login';

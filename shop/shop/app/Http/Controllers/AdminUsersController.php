@@ -28,17 +28,22 @@ class AdminUsersController extends Controller
             $users = AdminUser::where([
                 'name' => $data['account'],
                 'password' => $data['password']
-                ])->first();
+                ]);
         }
 
         if (array_key_exists('email', $data)) {
             $users = AdminUser::where([
                 'email' => $data['email'],
                 'password' => $data['password']
-                ])->first();
+                ]);
         }
 
-        return $users;
+        // 無搜尋到帳號
+        if (empty($users->first())) {
+            return null;
+        }
+
+        return $users->first();
     }
 
     // 用戶登入
@@ -49,8 +54,8 @@ class AdminUsersController extends Controller
         
         $apiToken = Str::random(10);
         
-        if (!$users) {
-            $this->response['code'] = 1006;
+        if (empty($users)) {
+            $this->response['code'] = 1018;
             $this->response['message'] = "帳號/郵件信箱 or 密碼 輸入錯誤";
         }
         if ($users && $users->update(['api_token'=>$apiToken])) {
@@ -96,7 +101,6 @@ class AdminUsersController extends Controller
     {
         $cookie = Cookie::forget('SESSION');
         $this->response['code'] = 1002;
-
         $this->response['message'] = "已登出";
 
         return response()->json($this->response)->withCookie($cookie);

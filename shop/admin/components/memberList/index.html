@@ -136,8 +136,11 @@
                         url:"/api/admin/destroy/" + id,
                         type: "PUT",
                         success:function(res){
-                            if (res.code !== 200) {
+                            if (res.message) {
                                 alert(res.message);
+                            }
+                            if (res.code !== 200) {
+                                return;
                             }
                             _this.getUserList();
                         }}
@@ -219,11 +222,12 @@
                 dataType: "json",
                 contentType: "application/json;charset=utf-8",
                 success:function(res){
+                    // 清除表格內容
+                    $('#memberTable').find('tbody').html('');
                     if (res.code !== 200) {
                         alert(res.message);
                     }
                     if (!res.data || !res.data.userList) {
-                        $('#memberTable').find('tbody').html('');
                         return;
                     }
                     var userList = res.data.userList;

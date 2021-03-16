@@ -83,12 +83,12 @@ class LevelController extends Controller
         switch ($levelList->offerType) {
             case 'A':
                 if ($totalAmount >= $levelList->full) {
-                    $countsDiscount = floor($totalAmount / $levelList->full);
+                    $countDiscount = floor($totalAmount / $levelList->full);
                 } else {
-                    $countsDiscount = 0;
+                    $countDiscount = 0;
                 }
                 
-                $promsPrice =  $levelList->discount * $countsDiscount;
+                $promsPrice =  $levelList->discount * $countDiscount;
                 break;
             case 'B':
                 $promsPrice = (float) floor($totalAmount * ($levelList->present)/100);

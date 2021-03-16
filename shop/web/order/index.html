@@ -165,7 +165,7 @@
                 setEditOrView: function(trList, setConfig) {
                     var isEdit = setConfig.isEdit;
                     var isBack = setConfig.isBack;
-                    var goods = $.extend(true, [],trList.goods);    
+                    var goods = isBack ? $.extend(true, [],trList.back) : $.extend(true, [],trList.goods);    
                     var currentProms = JSON.parse(trList.currentProms);
                     function promsTextMap() {
                         var promsText = $('<div class="red-tip fz-14">此筆訂單優惠條件, </div>');
@@ -197,7 +197,7 @@
                         var contentTr = $('<div class="content-tr clearfix" data-id="'+ list.id +'"></div>');
                         var listName = $('<div class="name-list"> 品項: '+ list.name +'</div>');
                         var listCount = $('<div class="name-count"> 數量：</div>');
-                        var listCountInput = $('<input value="'+ list.counts +'" '+ isDisabled +' />');
+                        var listCountInput = $('<input value="'+ list.count +'" '+ isDisabled +' />');
                         var listAmount = $('<span class="name-amount"> 單筆金額：</span>');
                         var listAmountInput = $('<span>$'+ list.amount +'</span>');
                         if (!isBack && isEdit) {
@@ -212,25 +212,27 @@
                         // 綁訂input輸入狀態
                         $(listCountInput).bind('input', function() {
                             var value = $(this).val() ? +$(this).val() : 0;
-                            var realTotal = list.total + trList.goods[index]['counts'];
+                            var realTotal = list.total + trList.goods[index]['count'];
 
-                            if (value > (list.total + trList.goods[index]['counts'])) {
+                            if (value > (list.total + trList.goods[index]['count'])) {
                                 alert('貨品數量不足');
-                                $(this).val(goods[index]['counts']);
+                                $(this).val(goods[index]['count']);
                                 return;
                             }
                             if (!isBack && isEdit) {
                                 $(listTotal).text("品項剩餘數量:" + (realTotal - value));
                             }
-                            goods[index]['counts'] = value;
+                            goods[index]['count'] = value;
                         });
                     });
 
                     content.append(promsText);
                     content.append('<br>');
+
                     if (!isEdit) {
                         return content;
                     }
+
                     var fixBtn = $('<button class="button gray">修改</button>');
                     fixBtn.appendTo(content);
 
@@ -238,9 +240,9 @@
                         e.preventDefault();
                         var newGoods = [];
                         goods.forEach(function(item) {
-                            if (item.counts > 0) {
+                            if (item.count > 0) {
                                 newGoods.push({
-                                    count: item.counts,
+                                    count: item.count,
                                     id: item.id
                                 });
                             };
@@ -307,9 +309,9 @@
                         var listCountInput = $('<input value=""/>');
                         var listAmount = $('<div class="name-amount"> 單筆金額：</div>');
                         var listAmountInput = $('<span>$'+ list.amount +'</span>');
-                        var originCount = $('<div class="origin-count"> 原本數量：'+ list.counts +'</div>');
+                        var originCount = $('<div class="origin-count"> 原本數量：'+ list.count +'</div>');
                         // 預設退貨貨品數量 0
-                        goods[index]['counts'] = 0;
+                        goods[index]['count'] = 0;
                     
                         contentTr.append(listName).append(listCount).append(listAmount).append(originCount);
                         listCount.append(listCountInput);
@@ -319,15 +321,15 @@
                         // 綁訂input輸入狀態
                         $(listCountInput).bind('input', function() {
                             var value = $(this).val();
-                            var listCounts = Number(list.counts);
+                            var listcount = Number(list.count);
 
-                            if (value > listCounts) {
+                            if (value > listcount) {
                                 alert('超出訂單數量');
                                 $(this).val('');
                                 return;
                             }
 
-                            goods[index]['counts'] = value;
+                            goods[index]['count'] = value;
                         });
                     });
 
@@ -341,9 +343,9 @@
                         e.preventDefault();
                         var newGoods = [];
                         goods.forEach(function(item) {
-                            if (item.counts > 0) {
+                            if (item.count > 0) {
                                 newGoods.push({
-                                    count: item.counts,
+                                    count: item.count,
                                     id: item.id
                                 });
                             };
@@ -383,7 +385,6 @@
                                         return;
                                     }
                                     // succse
-                                    
                                     swal({
                                         title: "申請退貨中",
                                         text: inputValue ? "原因：" + inputValue : "",
@@ -412,7 +413,9 @@
                                 'name': '收貨人', 
                                 'phone': '聯絡電話',
                                 'address': '地址', 
-                                'totalAmount': '消費金額',
+                                'totalAmount': '訂單金額',
+                                'payment': '付費金額',
+                                'coupon': '購物金',
                                 'status': '訂單狀態',
                                 'memo': '訂單備註',
                                 'oprate': '操作'
@@ -552,7 +555,7 @@
                                             var onlyAllBack = false;
 
                                             // 僅能申請整筆退貨
-                                            if (trList.goods.length < 2 && trList.goods[0].counts < 2) {
+                                            if (trList.goods.length < 2 && trList.goods[0].count < 2) {
                                                 onlyAllBack = true;
                                             }
 

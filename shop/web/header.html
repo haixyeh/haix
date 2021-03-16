@@ -3,7 +3,8 @@
 <head>
     <link rel="stylesheet" href="/web/css/header.css">
     <link rel="stylesheet" href="/web/css/jquery-ui.css">
-    <script src="/web/js/common.js"></script> 
+    <link rel="stylesheet" href="/web/css/loading.css">
+    <script src="/web/js/common.js"></script>
 </head>
 <body>
     <div class="header">
@@ -37,6 +38,11 @@
     </div>
     <div class="nav-wrap">
         <div id="nav" class="nav clearfix"></div>
+    </div>
+    <div class="header-mask-wrap"  id="loadingOn" style="display: none;">
+        <div class="loader">
+            <div class="ball-scale-multiple"><div></div><div></div><div></div></div>
+        </div>
     </div>
     <script src="/web/js/jquery-ui.js"></script>
     <script>

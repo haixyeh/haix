@@ -46,10 +46,12 @@ class OrdersController extends Controller
     public function checkout(Request $request)
     {
         $data = $request->all();
+        $isCheckCoupon = false;     // 確認購物金是否足夠
         $validator = Validator::make($data, [
             'name' => ['required', 'string', 'min:2', 'max:30'],
             'phone' => ['required', 'string', 'min:3', 'max:30'],
-            'address' => ['required', 'string', 'min:5', 'max:100']
+            'address' => ['required', 'string', 'min:5', 'max:100'],
+            'coupon' => ['numeric']
         ],[
             'name.required' => '請填寫帳號',
             'name.min' => '收件者：請輸入2～30字元',
@@ -60,6 +62,7 @@ class OrdersController extends Controller
             'address.required' => '請填寫收件地址',
             'address.min' => '收件地址：請輸入5～100字元',
             'address.max' => '收件地址：請輸入5～100字元',
+            'coupon.numeric' => '購物金額格式錯誤'
         ]);
 
         if ($validator->fails()) {
@@ -68,23 +71,45 @@ class OrdersController extends Controller
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
-        $goodsCar = $this->goodsMethod->shopCarData($request, true);
 
-        // 購物車空
+        $goodsCar = $this->goodsMethod->shopCarData($request, true);
+        $user= Users::where(['name' => $goodsCar['userAccount']]);
+        $userCoupon = $user->first()->coupon;   // 用戶購物金
+
+        // 確認購物金是否足夠
+        if (array_key_exists('coupon', $data)) {
+            if ($userCoupon < $data['coupon']) {
+                $this->response['code'] = 5566;
+                $this->response['message'] = '購物金不夠使用, 請重整確認頁面' . '(' . $this->response['code'] . ')';
+                return response()->json($this->response);
+            }
+            $isCheckCoupon = true;
+        } else {
+            $data['coupon'] = 0;
+        }
+
+        // 確認購物車是否存在貨物
         if (empty($goodsCar['goodsIndo'])) {
-            $this->response['code'] = 55661;
+            $this->response['code'] = 5567;
             $this->response['message'] = '購物車空了';
             return response()->json($this->response);
         }
 
         $goodsArray = $this->goodsLoopArray($goodsCar['goodsIndo']);
+        $orderNumber = $this->generateOrderNR(); 
 
+        // 確認商品數量
         if (empty($goodsArray)) {
-            $this->response['code'] = 5567;
+            $this->response['code'] = 5568;
             $this->response['message'] = '貨品不足, 請查看商品實際剩餘貨量';
             return response()->json($this->response);
         }
-        $orderNumber = $this->generateOrderNR();
+        // 使用購物金超過貨品金額
+        if ($goodsCar['totalAmount'] < $data['coupon']) {
+            $this->response['code'] = 5569;
+            $this->response['message'] = '使用購物金超過貨品金額';
+            return response()->json($this->response);
+        }
 
         $Create=Order::create([
             'account' => $goodsCar['userAccount'],
@@ -95,14 +120,17 @@ class OrdersController extends Controller
             'totalAmount' => $goodsCar['totalAmount'],
             'promsPrice' => $goodsCar['promsPrice'],
             'currentProms' => $goodsCar['currentProms'],
-            'goodsIndo' => json_encode($goodsArray)
+            'goodsIndo' => json_encode($goodsArray),
+            'coupon' => $data['coupon'],
+            'payment' => $goodsCar['totalAmount'] - $data['coupon']
         ]);
         
         if ($Create) {
+            // 先扣除購物金
+            if ($userCoupon) {
+                $user->update(['coupon' => $userCoupon - $data['coupon']]);
+            }
             $this->response['message'] = '建立成功, 您的訂單編號:' . $orderNumber ;
-            $user= Users::where([
-                'name' => $goodsCar['userAccount']
-            ]);
             $this->usersMethod->setMessage($user->first()->id, '已於[<span>'. $this->timeNow .'</span>] 訂購貨品,' . '訂單編號【' . $orderNumber . '】【貨到付款】');
             RedisServer::set('user'. $goodsCar['userId'] . 'car', '');
         } else {
@@ -182,14 +210,14 @@ class OrdersController extends Controller
         foreach ($list as $key => $item) {
             $goodsIndo = json_decode($item['goodsIndo']);
             $goodsIds = array();
-            $goodsCounts = array();
+            $goodscount = array();
             foreach ($goodsIndo as $itemKey => $itemInfo) {
                 array_push($goodsIds, $itemInfo->id);
-                array_push($goodsCounts, $itemInfo->count);
+                array_push($goodscount, $itemInfo->count);
             }
             $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
             foreach ($goods  as $goodsKey => $goodsItem) {
-                $goodsItem['counts'] = $goodsCounts[$goodsKey];
+                $goodsItem['count'] = $goodscount[$goodsKey];
             }
             $item['goods'] = $goods;
             unset($item['goodsIndo']);
@@ -209,14 +237,14 @@ class OrdersController extends Controller
         foreach ($list as $key => $item) {
             $goodsCountID = json_decode($item['goodsIndo']);
             $goodsIds = array();
-            $goodsCounts = array();
+            $goodscount = array();
             foreach ($goodsCountID as $itemKey => $itemInfo) {
                 array_push($goodsIds, $itemInfo->id);
-                array_push($goodsCounts, $itemInfo->count);
+                array_push($goodscount, $itemInfo->count);
             }
             $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
             foreach ($goods  as $goodsKey => $goodsItem) {
-                $goodsItem['counts'] = $goodsCounts[$goodsKey];
+                $goodsItem['count'] = $goodscount[$goodsKey];
             }
             $item['goods'] = $goods;
             unset($item['goodsIndo']);
@@ -237,16 +265,16 @@ class OrdersController extends Controller
         foreach ($list as $key => $item) {
             $goodsCountID = json_decode($item['goodsIndo']);
             $goodsIds = array();
-            $goodsCounts = array();
+            $goodscount = array();
             $goodsAmount = array();
             foreach ($goodsCountID as $itemKey => $itemInfo) {
                 array_push($goodsIds, $itemInfo->id);
-                array_push($goodsCounts, $itemInfo->count);
+                array_push($goodscount, $itemInfo->count);
                 array_push($goodsAmount, $itemInfo->amount);
             }
             $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
             foreach ($goods  as $goodsKey => $goodsItem) {
-                $goodsItem['counts'] = $goodsCounts[$goodsKey];
+                $goodsItem['count'] = $goodscount[$goodsKey];
                 $goodsItem['amount'] = $goodsAmount[$goodsKey];
             }
             $item['goods'] = $goods;
@@ -254,8 +282,8 @@ class OrdersController extends Controller
             unset($item['userId']);
 
             if ($item['status'] === 'R' || $item['status'] === 'T' || $item['status'] === 'F') {
-                $orderNumber = $item->orderNumber;
-                $applyOrder = RebackOrder::where('orderNumber', $orderNumber)->having('rebackStatus', '=', 'N')->first();
+                $orderNumber = $item['orderNumber'];
+                $applyOrder = RebackOrder::where('orderNumber', $orderNumber)->orderBy('id', 'desc')->first();
                 $item['back'] = isset($applyOrder->goodsIndo) ? json_decode($applyOrder->goodsIndo) : [];
             }
         }
@@ -385,6 +413,7 @@ class OrdersController extends Controller
         $order = $this->findOrder($id);
         $mome = '訂單已取消';
         $originMemo = $order->first()->memo;
+        $user= Users::where(['name' => $order->first()->account]);
 
         if ($order->first()->status !== 'N') {
             $this->response['code'] = 3213;
@@ -410,9 +439,21 @@ class OrdersController extends Controller
         } catch(Exception $e) {
             $queryStatus = false;
         }
+
         // 補回貨品數量
         if ($preGoods && $queryStatus) {
             $this->goodsLoopArray(json_decode($preGoods['goodsIndo']), 'add');
+        }
+        if ($queryStatus) {
+            $rebackCouponMsg = '';
+            if ($order->first()->coupon) {
+                // 將先扣除的購物金返回
+                $userCoupon = $user->first()->coupon;   // 用戶購物金
+                $coupon = $userCoupon + $order->first()->coupon;
+                $user->update(['coupon' => $coupon]);
+                $rebackCouponMsg = ', 購物金退還' . $order->first()->coupon;
+            }
+            $this->usersMethod->setMessage($user->first()->id, '<span>'. $this->timeNow .'</span> - 取消訂單, ' . '訂單編號【' . $order->first()->orderNumber . '】'. $rebackCouponMsg);
         }
 
         if (!$queryStatus) {

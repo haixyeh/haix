@@ -8,6 +8,8 @@ Route::get('/haix/userInit', 'UsersLoginController@UserInit'); // 初始資料
 Route::middleware('captchauth')->post('/haix/login','UsersLoginController@UsersLogin'); // 登入
 Route::get('/haix/goods/list','GoodsController@mapCategories'); // 商品列表
 Route::get('/haix/goods/single/{id}','GoodsController@single'); // 查看單一商品
+Route::post('/haix/getPwd', 'UsersController@getPwd'); // 取得密碼 - 寄送至電子郵件
+Route::post('/haix/changePwd/', 'UsersController@fixUpdatePwd');  // 客端忘記密碼修改
 
 Route::group(['middleware' => ['haixauth:api']], function(){
     Route::get('/haix/userInfo', 'UserInfoController@show');  // 會員資料顯示
@@ -24,7 +26,7 @@ Route::group(['middleware' => ['haixauth:api']], function(){
     Route::post('/haix/goods/order/reback','RebackController@apply'); // 退貨申請
     Route::get('/haix/goods/reback/{orderNumber}','RebackController@showSingle'); // 退貨申請
     Route::get('/haix/getMessage', 'UsersController@getMessage'); // 獲得訊息
-    Route::put('/haix/message/{id}', 'UsersController@delMsg'); // 獲得訊息
+    Route::put('/haix/message/{id}', 'UsersController@delMsg'); // 刪除訊息
 });
 
 // 後台用戶登入
