@@ -14,7 +14,7 @@ Route::post('/haix/changePwd/', 'UsersController@fixUpdatePwd');  // 客端忘�
 Route::group(['middleware' => ['haixauth:api']], function(){
     Route::get('/haix/userInfo', 'UserInfoController@show');  // 會員資料顯示
     Route::middleware('captchauth')->post('/haix/userInfo/edit', 'UserInfoController@edit');  // 編輯會員資料
-    Route::get('/haix/userInfo/add', 'UserInfoController@create');  // 會員註冊
+    Route::get('/haix/memLevel', 'LevelController@memLevel');  // 會員等級
     Route::get('/haix/out','UsersLogoutController@UsersLogout'); // 會員登出
     Route::post('/haix/goods/car/{id}', 'GoodsController@addShopCar');  // 加入購物車
     Route::get('/haix/goods/car/show', 'GoodsController@showShopCar');  // 查看購物車
@@ -27,6 +27,7 @@ Route::group(['middleware' => ['haixauth:api']], function(){
     Route::get('/haix/goods/reback/{orderNumber}','RebackController@showSingle'); // 退貨申請
     Route::get('/haix/getMessage', 'UsersController@getMessage'); // 獲得訊息
     Route::put('/haix/message/{id}', 'UsersController@delMsg'); // 刪除訊息
+    // Route::get('/haix/userInfo/add', 'UserInfoController@create');  // 會員註冊
 });
 
 // 後台用戶登入

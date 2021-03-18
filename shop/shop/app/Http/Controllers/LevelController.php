@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Level;
 use App\Users;
+use App\Http\Controllers\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,13 +17,16 @@ class LevelController extends Controller
      */
     private static $self;
     private $response;
+
     /**
      * MenuController constructor.
      */
     public function __construct()
     {
         $this->response = $this->normalOutput();
+        $this->usersMethod = new UsersController;
     }
+
     /**
      * 初始化
     */
@@ -33,16 +37,32 @@ class LevelController extends Controller
         }
         return self::$self;
     }
-    // 查詢所有等級資料(數據)
+    /**
+     * 查詢所有等級資料(數據)
+    */
     public function getAllLevel()
     {
         $levelAll = Level::get()->all();
 
         return $levelAll;
     }
+    /**
+     * 會員等級
+     */
+    public function memLevel(Request $request)
+    {
+        $user = $this->usersMethod->UserGet($request);
+        $result['current'] = $this->mapLevelLast($user->level);
+        $result['next'] = Level::having('id', '>', $user->level)->first();
+        $result['cost'] = $user->cost;
 
-    // 等級優惠金額(數據)
-    public function promsPrice($levelId, $totalAmount, $order = null) {
+        return $this->success($result);
+    }
+    /**
+     * 等級優惠金額(數據)
+     */
+    public function promsPrice($levelId, $totalAmount, $order = null)
+    {
         if (empty($order)) {
             $levelList = $this->mapLevelLast($levelId);
         } else {
@@ -57,9 +77,11 @@ class LevelController extends Controller
         );
         return $result;
     }
-
-    // 等級優惠金額(數據)
-    public function priceData($levelList, $totalAmount) {
+    /**
+     * 等級優惠金額(數據)
+     */
+    public function priceData($levelList, $totalAmount)
+    {
         $toFullPrice = 0; // 至滿額金額(尚差額度)
         $result = array(
             'isHasProms' => 'N',
@@ -104,14 +126,16 @@ class LevelController extends Controller
 
         return $result;
     }
-
-    // 對應最低等級(數據)
+    /**
+     * 對應最低等級(數據)
+     */
     public function mapLevelLast($levelId)
     {
         $allLevel = $this->getAllLevel();
         $levelList = array();
         $alreadyFindId = false;
         $temp = 0;
+
         foreach ($allLevel as $key => $item) {
             if ($item['id'] === (int)$levelId) {
                 $levelList = $item;
@@ -125,8 +149,9 @@ class LevelController extends Controller
         }
         return $levelList;
     }
-
-    // 查詢所有等級
+    /**
+     * 查詢所有等級
+     */
     public function show()
     {
         $levelAll = $this->getAllLevel();
@@ -134,8 +159,9 @@ class LevelController extends Controller
 
         return $data;
     }
-
-    // 新增等級
+    /**
+     * 新增等級
+     */
     public function addLevel(Request $request)
     {
         $data = $request->all();
@@ -194,14 +220,9 @@ class LevelController extends Controller
         return response()->json($this->response);
             
     }
-    public function previousLevel($id) {
-        $level = Level::orderBy('id', 'desc')
-                    ->having('id', '<', $id)
-                    ->take(1)
-                    ->get();
-        return $level;
-    }
-    // 編輯等級(不可修改等級晉級金額)
+    /**
+     * 編輯等級(不可修改等級晉級金額)
+     */
     public function edit(Request $request) {
         $data = $request->all();
         $validator = Validator::make($data, [
@@ -254,8 +275,9 @@ class LevelController extends Controller
 
         return response()->json($this->response);
     }
-
-    // 刪除
+    /**
+     * 刪除等級
+     */
     public function destroy(Request $request,int $id) {
         $levelAll = Level::orderBy('id', 'desc')->get();
         $levelLast = $levelAll[0];

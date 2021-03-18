@@ -20,28 +20,23 @@ class GoodsController extends Controller
     {
         $this->response = $this->normalOutput();
     }
-    // /**
-    //  * 初始化
-    // */
-    // public static function instance()
-    // {
-    //     if (!isset(self::$self)) {
-    //         self::$self = new self();
-    //     }
-    //     return self::$self;
-    // }
+
     // 全部商品
-    public function showAllList() {
+    public function showAllList()
+    {
         $data = $this->show(true);
 
         return $this->success($data);
     }
+
     // 上架商品
-    public function showStartList() {
+    public function showStartList()
+    {
         $data = $this->show(false);
 
         return $this->success($data['start']);
     }
+
     // 搜尋Object
     public function filterByDow($object, $id)
     {
@@ -60,12 +55,16 @@ class GoodsController extends Controller
         }
         return null;
     }
+
     // 前台 - 查看購物車
-    public function showShopCar(Request $request){ 
+    public function showShopCar(Request $request)
+    { 
         return $this->success($this->shopCarData($request));
     }
+
     // 數據 - 購物車資料
-    public function shopCarData(Request $request, $isForData = false, $goodsListData = [], $enterUser = array(), $order = null){
+    public function shopCarData(Request $request, $isForData = false, $goodsListData = [], $enterUser = array(), $order = null)
+    {
         if (empty($enterUser)) {
             $user = UserInfoController::instance()->UserGet($request);
         } else {
@@ -125,6 +124,8 @@ class GoodsController extends Controller
 
         return $data;
     }
+
+    // 塞入金額
     public function goodsMoeny($carListData) {
         $goodsInfo = array(
             'shopList'=> array(),
@@ -151,8 +152,10 @@ class GoodsController extends Controller
 
         return $goodsInfo;
     }
+
     // 前台 - 加入購物車
-    public function addShopCar(Request $request, $id) {
+    public function addShopCar(Request $request, $id)
+    {
         $data = $request->all();
 
         if (empty($data) || empty($data['count'])) {
@@ -185,8 +188,10 @@ class GoodsController extends Controller
 
         return $this->success(array());
     }
+
     // 刪除購物車項目
-    public function delSingleShopCar(Request $request, $id) {
+    public function delSingleShopCar(Request $request, $id)
+    {
         $userId = UserInfoController::instance()->UserGet($request)->id;
         $carListData = json_decode(RedisServer::get('user'. $userId . 'car'));
 
@@ -209,6 +214,7 @@ class GoodsController extends Controller
         RedisServer::set('user'. $userId . 'car', json_encode($newCarListData));
         return $this->success(array());
     }
+
     // 前台, 依分類排版
     function mapCategories()
     {
@@ -233,6 +239,7 @@ class GoodsController extends Controller
         );
         return $this->success($sentData);
     }
+
     // 共用 - 查詢單一商品 （Data）
     public function singleData($id)
     {
@@ -246,15 +253,16 @@ class GoodsController extends Controller
     {
         return $this->success($this->singleData($id));
     }
+
     // 共用 - 查詢所有商品
     public function show($isOrderDate)
     {
         $list = null;
         if ($isOrderDate) {
-            $list = Goods::orderBy('startDate')->get()->all();
+            $list = Goods::having('isDestroy', '=', 'N')->orderBy('startDate')->get()->all();
         }
         if (!$isOrderDate) {
-            $list = Goods::orderBy('isRecommon', 'desc')->get()->all();
+            $list = Goods::having('isDestroy', '=', 'N')->orderBy('isRecommon', 'desc')->get()->all();
         }
 
         $start = array();
@@ -283,8 +291,7 @@ class GoodsController extends Controller
                     $list[$key]['isOpen'] = 'N';
                     break;
             }
-            // 不顯示強至下架資訊
-            // unset($list[$key]['forcedRemoval']);
+
             if ($list[$key]['isOpen'] === 'P') {
                 array_push($start, $list[$key]);
             }
@@ -304,6 +311,7 @@ class GoodsController extends Controller
 
         return $newData;
     }
+
     // 後台, 新增or編輯 商品
     public function create(Request $request, $id = null)
     {
@@ -367,6 +375,10 @@ class GoodsController extends Controller
             'images'=>json_encode($imagesPath)
         ]);
 
+        if ($isEdit) {
+            unset($updataAarray['amount']);
+        }
+
         if(array_key_exists('forcedRemoval', $data)) {
             $updataAarray['forcedRemoval'] = $data['forcedRemoval'];
         }
@@ -389,17 +401,30 @@ class GoodsController extends Controller
         return response()->json($this->response);
             
     }
+
     // 下架商品
-    public function down(Request $request, $id) {
+    public function down(Request $request, $id)
+    {
         Goods::where('id',$id)->update([
             'forcedRemoval'=> 'Y'
         ]);
         return response()->json($this->response);
     }
+
     // 刪除該項商品
-    public function destroy(Request $request, $id) {
+    public function destroy(Request $request, $id)
+    {
         $goods = Goods::where('id',$id);
-        if ($goods && $goods -> delete()) {
+        try {
+            $queryStatus = true;
+            $goods->first()->update([
+                'isDestroy'=> 'Y'
+            ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $queryStatus = false;
+        }
+        if ($queryStatus) {
             $this->response['message'] = '刪除成功';
             return response()->json($this->response);
         }
@@ -407,8 +432,10 @@ class GoodsController extends Controller
         $this->response['message'] = '未成功刪除';
         return response()->json($this->response);
     }
+
     // 處理圖片
-    public function handleImage($file, $name, $index) {
+    public function handleImage($file, $name, $index)
+    {
         $imageName = time(). $index. '.'.request()->$name->getClientOriginalExtension();
         $file->move(public_path('images'), $imageName);
 

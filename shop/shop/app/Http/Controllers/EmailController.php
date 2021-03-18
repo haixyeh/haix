@@ -19,7 +19,7 @@ class EmailController extends Controller
         Mail::send([], [], function($message) use ($data) {
             $message->to($data['userMail'], $data['user'])
                     ->subject($data['title'])
-                    ->setBody($data['content']); // assuming text/plain;
+                    ->setBody($data['content']);
         });
     }
 }

@@ -32,8 +32,8 @@ class UserInfoController extends Controller
         }
         return self::$self;
     }
+    // 獲取使用者資訊
     public function UserGet($request) {
-        $user;
         // 防止重複取User資料
         if (empty($userStash)) {
             $user = $this->userMethod->UserGet($request);
@@ -47,7 +47,6 @@ class UserInfoController extends Controller
 
     /**
      * Show the form for creating a new resource.
-     *
      * @return \Illuminate\Http\Response
      */
     public function create(Request $request)
@@ -125,30 +124,40 @@ class UserInfoController extends Controller
         $validator = Validator::make($data, [
             'account' => ['required', 'string', 'min:4', 'max:15'],
             'email' => ['required', 'string', 'email', 'max:50'],
-            'firstName'=> ['required', 'string', 'max:10'],
-            'lastName' => ['required', 'string', 'max:20'],
-            'address' => ['required', 'string', 'max:50'],
-            'phone' => ['required', 'string', 'max:20'],
+            'firstName'=> ['required', 'string', 'max:10', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/ '],
+            'lastName' => ['required', 'string', 'max:20', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/ '],
+            'address' => ['required', 'string', 'max:50', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/ '],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+][0-9]*/'],
         ],[
             'email.required' => '請填寫郵件信箱',
             'email.max' => '郵件帳號：最多不超過50字',
             'account.required' => '帳號未填',
             'account.min' => '帳號：4~15字元',
             'account.max' => '帳號：4~15字元',
-            'firstName.required' => '請填寫姓氏帳號：請輸入6～15字元',
+            'firstName.required' => '請填寫姓氏帳號',
             'firstName.max' => '最多填寫10個字',
+            'firstName.regex' => '姓氏：不可填寫特殊符號',
             'lastName.required' => '請填名字',
             'lastName.max' => '最多填寫20個字',
+            'lastName.regex' => '名字：不可填寫特殊符號',
             'address.required' => '請填寫收貨地址',
+            'address.regex' => '地址：不可填寫特殊符號',
             'phone.required' => '請填寫手機號碼',
+            'phone.regex' => '電話：僅可輸入數字以及字首+號',
         ]);
+
+        // 不可輸入數字及特殊符號(允許 / _ ' 空格)
         if ($validator->fails()) {
             $error = $validator->errors()->first();
             $this->response['code'] = 1039;
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
-        
+        if ($user['name'] !== $data['account']) {
+            $this->response['code'] = 1050;
+            $this->response['message'] = '帳號有誤, 請重整頁面(1050)';
+            return response()->json($this->response);
+        }
         unset($data['captcha']);
         UserInfo::where([
             'account' => $user['name'],

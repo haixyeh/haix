@@ -342,7 +342,7 @@ class UsersController extends Controller
     public function updateLevel(Request $request) {
         $data = $request->all();
         $validator = Validator::make($data, [
-            'id' => ['required', 'number'],
+            'id' => ['required'],
             'level' => ['required', 'string'],
         ],[
             'id.required' => '列表key值有誤',

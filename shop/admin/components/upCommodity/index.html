@@ -148,6 +148,7 @@ var isEdit = false;
             var _this = this;
             var id = _this.getParameterByName('id');
             if (!id) {
+                $("input[name='amount']").after('<label></label><span class="red tip">新增後無法更改金額設定, 請審慎填寫</span>');
                 return;
             }
             _this.id = id;
@@ -165,19 +166,27 @@ var isEdit = false;
                     }
                     // 強制下架狀態
                     _this.isForceRemoval = (res.data.forcedRemoval === 'Y');
-                    console.log(_this.isForceRemoval, '_this.isForceRemoval');
                     _this.isEdit = true;
                     Preview.change_file(JSON.parse(res.data.images));
                     Object.keys(res.data).forEach(function(item) {
                         var inputName = toDash(item);
+                        var disabled = false;
                         var inputFiled = $('.goods-form').find("input[name='"+ inputName +"'], textarea[name='"+ inputName +"'], select[name='"+ inputName +"']");
+
                         if (!inputFiled[0]) {
                             return;
                         }
+
+                        // 輸入框不可點選 (編輯無法調整金額)
+                        if (_this.isEdit && inputName === 'amount') {
+                            $("input[name=" + inputName + "]").attr('disabled','disabled').addClass('disabled').after('<label></label><span class="red tip">編輯無法更改金額設定</span>');
+                        }
+
                         if (item === 'isRecommon') {
                             $("input[name=" + inputName + "][value='" + res.data[item] + "']").attr('checked',true);
                             return;
                         }
+                        
                         $(inputFiled[0]).val(res.data[item]);
                     });
                 }}

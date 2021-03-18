@@ -278,6 +278,7 @@ button.msg-del-btn {
     height: 100vh;
     background: rgba(0, 0, 0, 0.61);
     text-align: center;
+    z-index: 1000000;
 }
 .header-mask-wrap::before {
     display: inline-block;
@@ -289,4 +290,58 @@ button.msg-del-btn {
 .header-mask-wrap .loader {
     display: inline-block;
     vertical-align: middle;
+}
+#levelMemDialog {
+    line-height: 22px;
+}
+#levelMemDialog .level-info-msg {
+    position: relative;
+    border-radius: 5px;
+    border: 1px solid #1A2B2B;
+    padding: 10px 20px;
+}
+#levelMemDialog .level-now::before {
+    position: absolute;
+    top: -3px;
+    left: -4px;
+    content: 'Now';
+    background: #D8824D;
+    width: 30px;
+    height: 20px;
+    line-height: 20px;
+    color: #FFF;
+    font-size: 12px;
+    text-align: center;
+    font-family: ui-serif;
+    transform: rotate(-31deg);
+}
+.level-icon {
+    margin-left: 5px;
+    border-radius: 99em;
+    padding: 1px 10px;
+    background-color: rgb(236, 207, 43);
+    color: #FFF;
+    font-size: 14px;
+}
+.next-level {
+    margin: 20px 0;
+}
+.w3-progress-container {
+    position: relative;
+    border-radius: 99em;
+    width: 100%;
+    height: 1.5em;
+    background-color: #87CEEB;
+}
+
+.w3-progressbar {
+    position: absolute;
+    border-radius: 99em;
+    width: 0%;
+    height: 100%;
+    line-height: 24px;
+    background-color: #2196F3;
+    color: #FFF;
+    text-align: center;
+    transition: width 2s;
 }

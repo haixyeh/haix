@@ -169,6 +169,13 @@
     -moz-box-shadow: inset 0px 1px 4px #ECECEC;
     -webkit-box-shadow: inset 0px 1px 4px #ECECEC;
 }
+.input-wrap input:disabled {
+    background: rgb(173 173 173);
+    cursor: not-allowed;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+}
 .input-wrap select {
     background-color: #FFF;
 }

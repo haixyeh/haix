@@ -178,6 +178,7 @@
         userInfo: {},
         totalAmount: 0,
         totalCount: 0,
+        // 購物車設定
         getShopCarData: function() {
             var _this = this;
             $.ajax({
@@ -225,17 +226,20 @@
                             }
                         });
                     });
+
                     // 設定優惠滿額顯示
                     if (price.toFullPrice) {
                         $('#toFullPrice').text('(目前等級'+ levelProms.levelName +':消費在滿 ＄'+ price.toFullPrice + ', 即可獲得優惠)');
                     } else {
                         $('#toFullPrice').hide();
                     }
+
                     // 無優惠隱藏欄位
                     if (price.isHasProms === 'N') {
                         $('#checkoutForm .has-proms').hide();
                         return;
                     }
+
                     // 有優惠顯示購物金額
                     Object.keys(price).forEach(function(itemName) {
                         var itemDom =$('#checkoutForm #' + itemName)[0];
@@ -243,6 +247,7 @@
                             $(itemDom).text('$' + price[itemName]);
                         }
                     });
+
                     // 顯示會員等級
                     if (userLevel) {
                         var offerInfo = _this.offerInfo(userLevel);

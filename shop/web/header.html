@@ -13,11 +13,15 @@
             <button id="userMsg" class="button blue float-right" style="display: none;">
                 用戶信息
             </button>
-            <button id="openCar" class="button gray" style="display: none;">查看購物車</button>
-            <a id="goHome" href="/web" class="go-home" style="display: none;">返回首頁</a>
             <div id="userMsgDialog" style="display: none;">
                 <div class="content"></div>
             </div>
+            <button id="levelMem" class="button blue float-right" style="display: none;margin-right: 10px;">
+                會員等級
+            </button>
+            <div id="levelMemDialog" style="display: none;"></div>
+            <button id="openCar" class="button gray" style="display: none;">查看購物車</button>
+            <a id="goHome" href="/web" class="go-home" style="display: none;">返回首頁</a>
         </div>
         <div class="header-mid clearfix">
             <a href="/web">
@@ -47,20 +51,27 @@
     <script src="/web/js/jquery-ui.js"></script>
     <script>
         $(document).ready(function(){
+            $("#loadingOn").show();
             $.ajax({
                 url:"/api/haix/userInit",
                 type: "GET",
                 success:function(res){
+                    setTimeout(function() {
+                        $("#loadingOn").hide();
+                    }, 500)
                     errorHandle(res, true);
                     if (res.data.is_login === 'Y') {
                         if(location.pathname.indexOf('login') >= 1 || location.pathname.indexOf('regist') >= 1) {
                             location.href = '/web';
                             return;
                         }
+
                         // 允許開啟查看購物車功能
                         $('#openCar').show();
                         // 允許開啟用戶信息
                         $('#userMsg').show();
+                        // 允許查看會員等級
+                        $('#levelMem').show();
 
                         if (res.data.isSeeMsg === 'N') {
                             $('#userMsg').addClass('has-new');
@@ -134,6 +145,95 @@
                 }}
             );
 
+            /*  會員等級 */
+            var levelData = {
+                init: function() {
+                    var _this = this;
+                    _this.getMemLevel();
+                },
+                getMemLevel: function() {
+                    var _this = this;
+                    $.ajax({
+                        url:"/api/haix/memLevel",
+                        type: "GET",
+                        success:function(res){
+                            errorHandle(res, true);
+                            if (res.code !== 200) {
+                                return;
+                            }
+                            if (res.data && res.data.current) {
+                                var currentOfferInfo = _this.offerInfo(res.data.current, true);
+                                var nextOfferInfo = _this.offerInfo(res.data.next);
+                                var userCost = res.data.cost;
+                                var nextAmount = res.data && res.data.next && res.data.next.upgradeAmount;
+                                var balace = nextAmount - userCost; // 剩餘要多少才能升
+                                var prsent = ((userCost/nextAmount) * 100).toFixed(2);
+
+                                if (res.data.current) {
+                                    $('#levelMemDialog').html('');
+                                    $('#levelMemDialog').append(currentOfferInfo);
+                                    $('#levelMemDialog').append('<hr>');
+                                    
+                                    if (!nextOfferInfo) {
+                                        $('#levelMemDialog').append('<div>您已達到最高等級!!!</div>');
+                                    } else {
+                                        $("<div></div>").html(
+                                            '<div class="next-level">'+
+                                                '<span>距下一個等級, 尚差額度：$'+ balace +')：</span>'+
+                                                '<div class="w3-progress-container">'+
+                                                    '<div id="myBar" class="w3-progressbar">'+
+                                                        '<div>$'+ userCost + '</div>'+
+                                                    '</div>'+
+                                                '</div>'+
+                                            '<div>'
+                                        ).appendTo('#levelMemDialog');
+                                        $('#levelMemDialog').append(nextOfferInfo);
+                                    }
+
+                                    $("#levelMemDialog").dialog({
+                                        resizable: false,
+                                        width: 500,
+                                        height: nextOfferInfo ? 300 : 165,
+                                        modal: true
+                                    });
+                                    $('#myBar').css('width', prsent + '%');
+                                }                                
+                            }
+                        }
+                    });
+                },
+                offerType: {
+                    'A': '滿額折扣送',
+                    'B': '固定折扣％數'
+                },
+                offerInfo: function(item, isNow) {
+                    if (!item) {
+                        return null;
+                    }
+                    var _this = this;
+                    var offerText = '';
+                    var offerContent = $('<div class="level-info-msg '+ (isNow ? 'level-now' : '') +'"><div>');
+                        offerContent.append('<div class="level-list">會員等級:<span class="level-icon">' + item.levelName + '</span></div');
+                    switch (item.offerType) {
+                        case 'A':
+                            offerText = _this.offerType[item.offerType] + 
+                                '(滿額＄' + item.full + ', 折扣$' + item.discount +')';
+                            break;
+                        case 'B':
+                            offerText = _this.offerType[item.offerType] + '(折扣'+ item.present +'%)'
+                            break;
+                        default:
+                            offerText = '無優惠';
+                            break;
+                    }
+
+                    return offerContent.append('<div class="level-list">' + offerText + '</div>');
+                }
+            }
+            $('#levelMem').bind('click', function() {
+                levelData.init();
+            });
+            
             $('#logOut').on('click', function() {
                 $.ajax({
                     url:"/api/haix/out",

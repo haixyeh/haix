@@ -14,15 +14,10 @@ class HomeController extends Controller
     {
         $this->response = $this->normalOutput();
     }
+
     /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Http\Response
+     * 客端的導覽列
      */
-    public function index()
-    {
-        // return view('home');
-    }
     public function menuList(Request $request)
     {
         $isLogin = 'N';
