@@ -157,6 +157,22 @@ class GoodsController extends Controller
     public function addShopCar(Request $request, $id)
     {
         $data = $request->all();
+        $validator = Validator::make($data, [
+            'count' => ['required', 'numeric', 'min:1', 'max:9999', 'regex:/^[0-9]*$/'],
+        ],[
+            'count.required' => '請填寫上架時間',
+            'count.numeric' => '庫存量:請勿必輸入數字',
+            'count.min' => '購買數量: 不可小於1',
+            'count.max' => '購買數量: 不可輸入超過4位數',
+            'count.regex' => '購買數量: 請輸入正整數',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            $this->response['code'] = 2025;
+            $this->response['message'] = $error;
+            return response()->json($this->response);
+        }
 
         if (empty($data) || empty($data['count'])) {
             $this->response['message'] = '請輸入數量';
@@ -327,32 +343,60 @@ class GoodsController extends Controller
             'endDate' => ['required', 'date_format:Y-m-d'],
             'name' => ['required', 'string'],
             'info' => ['required', 'string'],
-            'amount' => ['required', 'numeric'],
-            'total' => ['required', 'numeric'],
+            'amount' => ['required', 'numeric', 'min:1', 'max:10000000', 'regex:/^[0-9]*$/'],
+            'total' => ['required', 'numeric', 'min:0', 'max:9999', 'regex:/^[0-9]*$/'],
             'goodsType' => ['required', 'string'],
             'isRecommon' => ['required', 'string'],
-            'upload0' => [$uploadIsReq , 'mimes:jpeg,jpg,png,gif', 'max:100000'],
-            'upload1' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:100000'],
-            'upload2' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:100000'],
-            'upload3' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:100000'],
-            'upload4' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:100000'],
+            'upload0' => [$uploadIsReq , 'mimes:jpeg,jpg,png,gif', 'max:1000000'],
+            'upload1' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:1000000'],
+            'upload2' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:1000000'],
+            'upload3' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:1000000'],
+            'upload4' => ['sometimes', 'mimes:jpeg,jpg,png,gif', 'max:1000000'],
         ],[
             'startDate.required' => '請填寫上架時間',
+            'startDate.date_format' => '上架時間,格式錯誤！',
             'endDate.required' => '請填寫下架時間',
+            'endDate.date_format' => '下架時間,格式錯誤！',
             'name.required' => '請填寫密碼',
+            'name.string' => '商品名稱,格式有誤！',
+            'info.required' => '商品描述請勿必輸入',
+            'amount.required' => '商品金額請勿必輸入',
+            'amount.numeric' => '商品金額:請勿必輸入數字',
+            'amount.min' => '商品金額：金額請大於0',
+            'amount.max' => '商品金額：不可輸入超過9位數',
+            'amount.regex' => '商品金額:金額請填寫正整數',
+            'total.required' => '庫存量請勿必填寫！',
+            'total.numeric' => '庫存量:請勿必輸入數字',
+            'total.min' => '庫存量：數量小於0',
+            'total.max' => '庫存量：不可輸入超過4位數',
+            'total.regex' => '庫存量:請輸入正整數',
+            'goodsType.required' => '商品分類資訊錯誤, 請聯繫客服',
+            'goodsType.string' => '商品分類資訊錯誤, 請聯繫客服',
+            'isRecommon.required' => '是否推廣商品資訊缺失',
+            'upload0.mimes' => '上傳檔案只能peg,jpg,png,gif',
+            'upload1.mimes' => '上傳檔案只能peg,jpg,png,gif',
+            'upload2.mimes' => '上傳檔案只能peg,jpg,png,gif',
+            'upload3.mimes' => '上傳檔案只能peg,jpg,png,gif',
+            'upload4.mimes' => '上傳檔案只能peg,jpg,png,gif',
+            'upload0.max' => 'Size 不能超過 1MB',
+            'upload1.max' => 'Size 不能超過 1MB',
+            'upload2.max' => 'Size 不能超過 1MB',
+            'upload3.max' => 'Size 不能超過 1MB',
+            'upload4.max' => 'Size 不能超過 1MB',
         ]);
 
         if ($validator->fails()) {
             $error = $validator->errors()->first();
-
+            $this->response['code'] = 2022;
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
-    
+
         $imagesPath = array();
         $images = array(
             'upload0', 'upload1', 'upload2', 'upload3', 'upload4'
         );
+
         // 圖片
         $index = 0;
         foreach($images as $k) {            

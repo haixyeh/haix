@@ -101,29 +101,10 @@
             <img id="captchaImg" alt="點擊產生圖片">
         </div>
         <div class="submit-wrap">
-            <button class="button pink" id="submit">修改</button>
+            <button class="button blue" id="changePwd">修改密碼</button>
+            <button class="button pink" id="submit">儲存</button>
         </div>
     </div>
-    <!-- <button id="fixPassword" class="button">我要修改密碼</button>
-    <div class="password-fix-wrap" style="display: none;">
-        <div class="title">修改密碼</div>
-        <div class="input-wrap clearfix">
-            <label for="password"><span>原密碼</span></label>
-            <input type="password" id="password" placeholder="請輸入原密碼">
-        </div>
-        <div class="input-wrap clearfix">
-            <label for="password"><span>修改密碼</span></label>
-            <input type="password" id="password" placeholder="請輸入修改密碼">
-        </div>
-        <div class="input-wrap clearfix">
-            <label for="password"><span>確認修改密碼</span></label>
-            <input type="password" id="password" placeholder="請輸入確認修改密碼">
-        </div>
-        <div id="captchaDom" class="input-wrap clearfix"> </div>
-        <div class="submit-wrap">
-            <button class="button" id="psdSubmit">修改</button>
-        </div>
-    </div> -->
     <script>
          $(document).ready(function(){
             var userLoginType = 'account';
@@ -138,6 +119,7 @@
                         }}
                     );
                 };
+
                 // 獲取會員資料
                 $.ajax({
                     url:"/api/haix/userInfo",
@@ -157,6 +139,13 @@
                         }
                     }}
                 );
+
+                // 更換密碼
+                $('#changePwd').on('click', function() {
+                    if (confirm('更換密碼需切換頁面, 若需修改會員資料請先儲存')) {
+                        location.href = '/web/changePwd';
+                    };
+                });
                 
                 // 初次載入顯示驗證碼
                 captchImgMethod();

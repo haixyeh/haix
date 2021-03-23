@@ -37,6 +37,11 @@ class HomeController extends Controller
                 'name' => 'member',
                 'open' => $isLogin
             ),
+            array(
+                'link' => '/connection',
+                'name' => 'connection',
+                'open' => $isLogin
+            ),
         ]);
         if (request()->cookie('SESSION')) {
             $isLogin = 'Y';

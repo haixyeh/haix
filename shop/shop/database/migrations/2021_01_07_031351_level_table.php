@@ -16,7 +16,7 @@ class LevelTable extends Migration
         //
         Schema::create('level', function (Blueprint $table) {
             $table->increments('id');
-            $table->char('levelName', 30);
+            $table->char('levelName', 30)->unique();;
             $table->char('offer', 1)->defalut('N');
             $table->char('offerType', 1)->nullable();
             $table->integer('full')->nullable();

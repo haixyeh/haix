@@ -95,11 +95,11 @@ input[type="file"] {
             </div>
             <div class="input-wrap">
                 <label for="amount"><span>商品金額</span></label>
-                <input type="number"" id="amount"" name="amount" placeholder="請輸入商品金額">
+                <input type="number"" id="amount"" name="amount" min="1" max="99999999" placeholder="請輸入商品金額">
             </div>
             <div class="input-wrap">
                 <label for="total""><span>庫存量</span></label>
-                <input type="number"" id="total"" name="total" placeholder="請輸入庫存量">
+                <input type="number"" id="total"" name="total" min="0" max="9999" placeholder="請輸入庫存量">
             </div>
             <div class="input-wrap">
                 <label for="goodsType""><span>商品分類</span></label>
@@ -284,8 +284,10 @@ var isEdit = false;
                 processData: false,
                 type: "POST",
                 success:function(res){
-                    if (res.code === 200) {
+                    if (res.message) {
                         alert(res.message || 'error');
+                    }
+                    if (res.code === 200) {
                         location.reload();
                     }
                 }
@@ -311,6 +313,26 @@ var isEdit = false;
                 return;
             }
             root.on("change", ".upl", function (){
+                var input = this;
+                var files = input.files;
+                var isImgError = false;
+                Object.keys(files).some(function(file) {
+                    if(!/\/(gif|jpg|jpeg|png|GIF|JPG|PNG)$/.test(files[file].type)){
+                        alert('「' + files[file].name + "」 檔案類型必須是.gif,jpeg,jpg,png中的一種");
+                        isImgError = true;
+                        return true;
+                    }
+                    if (files[file].size > 1000000) {
+                        alert('圖片「' + files[file].name + '」, Size 不能超過 1MB');
+                        isImgError = true;
+                        return true;
+                    }
+                });
+                if (isImgError) {
+                    $(this).val(null);
+                    root.find(".preview").empty();
+                    return;
+                }
                 show(this);
             });
         }

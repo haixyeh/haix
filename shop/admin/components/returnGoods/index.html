@@ -1,21 +1,6 @@
 <script src="/admin/js/tabel.js"></script>
 <script src="/admin/js/sweetalert-dev.js"></script>
 <style>
-    .red-tip {
-        /* display: inline-block; */
-        color: rgb(247, 77, 77);
-        font-size: 12px;
-    }
-    .red-tip::before {
-        display: inline;
-        content: "( ";
-        font-size: 14px;
-    }
-    .red-tip::after {
-        display: inline;
-        content: " )";
-        font-size: 14px;
-    }
     .goods-item-list {
         margin-top: 5px;
         padding: 5px;
@@ -248,7 +233,7 @@
                             }
                             var applyCancelBtn = (rebackStatus === 'N' || rebackStatus === 'Y') ? $('<button class="gray button">' + ButtonText +'</button>') : null;
 
-                            var lockCancelBtn = (rebackStatus === 'Y') ? $('<button id="lockBtn" class="pink button">強制取消再退貨</button>') : null;
+                            var lockCancelBtn = (rebackStatus === 'N') ? $('<button id="lockBtn" class="pink button">強制取消再退貨</button>') : null;
                             
                             var cancelMethod = function(e) {
                                     e.preventDefault();
@@ -324,7 +309,6 @@
 
                             if (finishBtn) {
                                 finishBtn.bind('click', function(inputValue) {
-                                    
                                     swal({
                                             title: "退貨完成？",
                                             text: "訂單號『" + trList.orderNumber + "』: 請確認已收到退貨商品",

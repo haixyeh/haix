@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聯絡我們</title>
+    <link rel="stylesheet" href="/web/css/reset.css">
+    <script src="/web/js/jquery.min.js"></script>
+    <style>
+        .password-fix-wrap,
+        .info-wrap-user {
+            margin: 0 auto;
+            max-width: 500px;
+            background: #FFF;
+            padding: 25px 15px 25px 10px;
+            font: 12px Georgia, "Times New Roman", Times, serif;
+            color: #888;
+            text-shadow: 1px 1px 1px #FFF;
+            border:1px solid #E4E4E4;
+        }
+        .info-wrap-user .input-wrap {
+            margin-top: 15px;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+        }
+        .info-wrap-user .input-wrap label {
+            float: left;
+            width: 20%;
+            text-align: right;
+            padding-right: 10px;
+            margin-top: 6px;
+        }
+        .info-wrap-user .input-wrap label>span {
+            color: #888;
+            font-size: 15px;
+        }
+        .info-wrap-user .input-wrap input[type="text"],
+        .info-wrap-user .input-wrap input[type="email"],
+        .info-wrap-user .input-wrap input[type="password"],
+        .info-wrap-user .input-wrap textarea,
+        .info-wrap-user .input-wrap select {
+            float: left;
+            border: 1px solid #DADADA;
+            color: #888;
+            height: 38px;
+            margin: 0 6px 8px 0;
+            outline: 0 none;
+            padding: 3px 3px 3px 5px;
+            width: 70%;
+            font-size: 12px;
+            line-height:15px;
+            box-sizing: border-box;
+            box-shadow: inset 0px 1px 4px #ECECEC;
+            -moz-box-shadow: inset 0px 1px 4px #ECECEC;
+            -webkit-box-shadow: inset 0px 1px 4px #ECECEC;
+        }
+        .input-wrap.message-wrap textarea {
+            height: 149px;
+            max-height: 300px;
+            max-width: 350px;
+            min-width: 350px;
+        }
+        .info-wrap-user .input-wrap select {
+            background-color: #FFF;
+        }
+        .submit-wrap {
+            padding-right: 30px;
+            text-align: right;
+        }        
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+    <div class="info-wrap-user">
+        <div class="title">聯絡我們</div>
+        <div class="input-wrap first-name-wrap clearfix">
+            <label for="name"><span>聯絡人姓名</span></label>
+            <input type="text" id="name" placeholder="請輸入聯絡人姓名">
+        </div>
+        <div class="input-wrap phone-wrap clearfix">
+            <label for="phone"><span>聯絡電話</span></label>
+            <input type="text" id="phone" placeholder="請輸入電話">
+        </div>
+        <div class="input-wrap email-wrap clearfix">
+            <label for="email"><span>通訊信箱</span></label>
+            <input type="email" id="email" placeholder="請輸入郵件帳號">
+        </div>
+        <div class="input-wrap message-wrap clearfix">
+            <label for="message"><span>留言內容</span></label>
+            <textarea type="text" id="message" cols="50" rows="5" placeholder="請輸入留言內容"> </textarea>
+        </div>
+        <div class="input-wrap clearfix">
+            <label for="captcha" name="captcha"><span>驗證碼</span></label>
+            <input type="text" name="captcha" id="captcha" autocomplete="off">
+            <label for=""><span></span></label>
+            <img id="captchaImg" alt="點擊產生圖片">
+        </div>
+        <div class="submit-wrap">
+            <button class="button pink" id="submit">送出</button>
+        </div>
+    </div>
+    <script >
+         $(document).ready(function(){
+            var init = function() {
+                // 驗證碼圖片api
+                var captchImgMethod = function() {
+                    $.ajax({
+                        url:"/api/haix/flat?" + Math.random(),
+                        success:function(result){
+                            $("#captchaImg").attr('src', result.img);
+                             
+                            // 點擊產生驗證碼
+                            $("#captchaImg").on('click', function() {
+                                captchImgMethod();
+                            });
+                        }}
+                    );
+                };
+
+                // 初次載入顯示驗證碼
+                captchImgMethod();
+
+                if (isLogin === 'Y') {
+                    // 獲取會員資料
+                    $.ajax({
+                        url:"/api/haix/userInfo",
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(res){
+                            // function in header load
+                            errorHandle(res, true);
+                            if (res.data) {
+                                for (const key in res.data) {
+                                    if (res.data.hasOwnProperty(key)) {
+                                        var value = res.data[key];
+                                        $('#' + key).val(value);
+                                    }
+                                }
+                            }
+                        }}
+                    );
+                }
+
+                // 送出修改
+                $("#submit").click(function(){
+                    var inputFiled = $('.info-wrap-user').find('.input-wrap input, .input-wrap textarea');
+                    var dataEdit = {};
+                    $.each(inputFiled, function(item) {
+                        var itemDom = inputFiled[item];
+                        dataEdit[itemDom.id] = itemDom.value;
+                    });
+                    $.ajax({
+                        url:"/api/haix/contact",
+                        data: JSON.stringify(dataEdit),
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success:function(result){
+                            alert(result.message || 'error');
+                            if (result.code === 200) {
+                                window.location = '/web';
+                            }
+                        }}
+                    );
+                });
+            };
+            $("#header").load("/web/header.html", function() {
+                setTimeout(function() {
+                    $('body').show();
+                }, 100);
+                setTimeout(function() {
+                    init();
+                }, 101);
+            });
+         })
+    </script>
+</body>
+</html>

@@ -1,24 +1,3 @@
-<div>
-    <h3 class="title">訂單管理</h3>
-    <div id="tab"></div>
-    <table id="orderListTable" class="order-list-table">
-        <thead>
-            <tr>
-                <th name="orderNumber">訂單號</th>
-                <th name="account">會員帳號</th>
-                <th name="name">收件者</th>
-                <th name="phone">電話</th>
-                <th name="status">處理狀態</th>
-                <th name="goods">購買貨品</th>
-                <th name="address">地址</th>
-                <th name="updated_at">最後異動時間</th>
-                <th name="oprate">操作</th>
-                <th name="memo">備註</th>
-            </tr>
-        </thead>
-        <tbody id="oderList" class="is-open-all"></tbody>
-    </table>
-</div>
 <style>
     .goods-item-list {
         margin-top: 5px;
@@ -65,13 +44,63 @@
     .conten-wrap {
         min-width: 700px;
     }
+    .search-wrap input {
+        height: 21px;
+    }
+    .search-wrap {
+        margin-bottom: 10px;
+    }
 </style>
+<div>
+    <h3 class="title">訂單管理</h3>
+    <div id="searchWrap" class="search-wrap">
+        <span class="input-list">
+            <label for="account">帳號</label>
+            <input type="text" name="account" id="account">
+        </span>
+        <span class="input-list">
+            <label for="userName">收件者</label>
+            <input type="text" name="userName" id="userName">
+        </span>
+        <button id="search" class="minsize button green">搜尋</button>
+    </div>
+    
+    <div id="tab"></div>
+    <table id="orderListTable" class="order-list-table">
+        <thead>
+            <tr>
+                <th name="orderNumber">訂單號</th>
+                <th name="account">會員帳號</th>
+                <th name="name">收件者</th>
+                <th name="phone">電話</th>
+                <th name="status">處理狀態</th>
+                <th name="goods">購買貨品</th>
+                <th name="address">地址</th>
+                <th name="updated_at">最後異動時間</th>
+                <th name="oprate">操作</th>
+                <th name="memo">備註</th>
+            </tr>
+        </thead>
+        <tbody id="oderList" class="is-open-all"></tbody>
+    </table>
+</div>
 <script>
     (function($){
         const order = {
             init: function() {
                 var _this = this;
                 _this.getOrderList();
+               
+                $('#search').on('click', function() {
+                    var obj = {};
+                    $('.search-wrap').find('input').each(function(index, item) {
+                        var filedName = $(item).attr('name');
+                        var filedValue = $(item).val();
+                        obj[filedName] = filedValue;
+                    })
+                    _this.getOrderList(obj);
+                });
+                _this.setTabButton();
             },
             orderData: [], // 訂單內容數據
             tabItemName: {
@@ -85,7 +114,7 @@
             tabBindMethod: function(e) {
                 e.preventDefault();
                 var tabName = ($(this).prop('id')).replace('tab_', '');
-                // order.setTable(tabName);
+                order.setTable(tabName);
 
                 $("#oderList").removeAttr('class');
                 $("#oderList").attr('class', 'is-open-' + tabName);
@@ -95,7 +124,6 @@
                 var _this = this;
                 var tabWrap = $('<div class="tab-wrap"></div>');
                 Object.keys(_this.tabItemName).forEach(function(item, index) {
-                    
                     var button = $('<button id="tab_'+ item +'">' + _this.tabItemName[item] + '</button>');
                     button.bind('click', _this.tabBindMethod);
                     if (!index) {
@@ -260,27 +288,32 @@
 
                 return tdContent;
             },
-            getOrderList: function() {
+            getOrderList: function(paramObj = {}) {
                 var _this = this;
+                var paramsUrl = '';
+                if (Object.keys(paramObj).length) {
+                    var params = $.param(paramObj);
+                    paramsUrl = '?' + params;
+                }
                 $.ajax({
-                    url:"/api/admin/goods/order/list",
+                    url:"/api/admin/goods/order/list" + paramsUrl,
                     type: "GET",
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
                     success:function(res){
-                        if (!res || !res.data || !Object.keys(res.data).length) {
+                        if (!res || !res.data) {
                             return;
                         }
 
                         _this.orderData = res.data;
                         _this.setTable();
-                        _this.setTabButton();
                     }}
                 );
             },
             setTable: function(search = null) {
                 var _this = this;
                 $("#oderList").html('');
+                console.log(_this.orderData, '_this.orderData');
                 _this.orderData.forEach((list, index) => {
                     _this.tr = $('<tr class="tr-status-'+ list.status  +'" data-index="'+ index +'"></tr>').appendTo("#oderList");
                     if (search !== 'all' && search && list.status !== search) {

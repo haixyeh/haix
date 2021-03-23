@@ -252,6 +252,7 @@
                     if (userLevel) {
                         var offerInfo = _this.offerInfo(userLevel);
                         if (userLevel.offer === 'Y') {
+                            $('#vipInfo').html('');
                             $('#vipInfo').append(offerInfo);
                             return;
                         }

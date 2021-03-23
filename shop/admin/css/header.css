@@ -280,3 +280,18 @@ h3.title {
     padding-bottom: 10px;
     font-size: 28px;
 }
+
+.red-tip {
+    color: rgb(247, 77, 77);
+    font-size: 12px;
+}
+.red-tip::before {
+    display: inline;
+    content: "( ";
+    font-size: 14px;
+}
+.red-tip::after {
+    display: inline;
+    content: " )";
+    font-size: 14px;
+}

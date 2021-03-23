@@ -48,26 +48,30 @@ class OrdersController extends Controller
         $data = $request->all();
         $isCheckCoupon = false;     // 確認購物金是否足夠
         $validator = Validator::make($data, [
-            'name' => ['required', 'string', 'min:2', 'max:30'],
-            'phone' => ['required', 'string', 'min:3', 'max:30'],
-            'address' => ['required', 'string', 'min:5', 'max:100'],
+            'name' => ['required', 'string', 'min:2', 'max:30', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/'],
+            'phone' => ['required', 'string', 'min:3', 'max:30', 'regex:/^[0-9+][0-9]+$/'],
+            'address' => ['required', 'string', 'min:5', 'max:100', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/'],
             'coupon' => ['numeric']
         ],[
-            'name.required' => '請填寫帳號',
+            'name.required' => '請填寫收件者',
+            'name.min' => '收件者：字數至少兩個字',
+            'name.regex' =>'收件者：請勿輸入特殊符號',
             'name.min' => '收件者：請輸入2～30字元',
             'name.max' => '收件者：請輸入2～30字元',
             'phone.required' => '請填寫聯絡電話',
-            'phone.min' => '電話：請輸入3～30字元',
-            'phone.max' => '電話：請輸入3～30字元',
+            'phone.min' => '聯絡電話：請輸入3～30字元',
+            'phone.max' => '聯絡電話：請輸入3～30字元',
+            'phone.regex' => '聯絡電話：僅可輸入數字以及字首+號',
             'address.required' => '請填寫收件地址',
             'address.min' => '收件地址：請輸入5～100字元',
             'address.max' => '收件地址：請輸入5～100字元',
-            'coupon.numeric' => '購物金額格式錯誤'
+            'address.regex' => '收件地址：請勿輸入特殊符號',
+            'coupon.numeric' => '購物金額格式錯誤',
         ]);
 
         if ($validator->fails()) {
             $error = $validator->errors()->first();
-
+            $this->response['code'] = 3011;
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
@@ -189,24 +193,32 @@ class OrdersController extends Controller
         return $generateorderNumber;
     }
     // 後台退貨訂單資料
-    public function showBack($back = false)
+    public function showBack(Request $request, $back = false)
     {
-        return $this->show(true);
+        return $this->show($request, true);
     }
     // 後台顯示客戶訂單資料
-    public function show($back = false)
+    public function show(Request $request, $back = false)
     {
+        $account = $request->input('account');
+        $name = $request->input('userName');
+        $whereObj = array('account'=> $account, 'name'=> $name);
+        if (empty($name)) {
+            unset($whereObj['name']);
+        }
+        if (empty($account)) {
+            unset($whereObj['account']);
+        }
         if ($back) {
-            $list = Order::having('cancelOrder', '=', 'N')
-            ->having('status', '=', 'R')->orHaving('status', '=', 'T')->orHaving('status', '=', 'F')
-            ->orHaving('status', '=', 'L')->orderBy('id', 'desc')->get()->all();
+            $list = Order::having('cancelOrder', 'N')
+            ->having('status', 'R')->orHaving('status', 'T')->orHaving('status', 'F')
+            ->orHaving('status', 'L')->orderBy('id', 'desc')->get()->all();
         } else {
-            $list = Order::having('cancelOrder', '=', 'N')
-            ->having('status', '=', 'N')->orHaving('status', '=', 'Y')
-            ->orHaving('status', '=', 'S')->orHaving('status', '=', 'E')->orHaving('status', '=', 'L')
+            $list = Order::where($whereObj)->having('cancelOrder', 'N')
+            ->having('status', 'N')->orHaving('status', 'Y')
+            ->orHaving('status', 'S')->orHaving('status', 'E')->orHaving('status', 'L')
             ->orderBy('id', 'desc')->get()->all();
         }
-    
         foreach ($list as $key => $item) {
             $goodsIndo = json_decode($item['goodsIndo']);
             $goodsIds = array();
@@ -503,6 +515,12 @@ class OrdersController extends Controller
         ]);
 
         $order = $this->findOrder($data['id']);
+
+        if ($order->first()->status !== 'N') {
+            $this->response['code'] = 3235;
+            $this->response['message'] = '此筆訂單已確認，無法更改數量';
+            return response()->json($this->response);
+        }
         
         $preGoods = $order->get()->first();
         
@@ -526,10 +544,11 @@ class OrdersController extends Controller
         }
 
         $goods = $this->goodsMethod->shopCarData($request, true, $goodsArray);
-        
+        $coupon = $order->first()->coupon;  // 使用購物金
         try {
             $order->update([
                 'goodsIndo' => json_encode($goodsArray),
+                'payment' => $goods['totalAmount'] - $coupon,
                 'totalAmount' => $goods['totalAmount'],
             ]);
             $queryStatus = true;

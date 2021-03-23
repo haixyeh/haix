@@ -47,9 +47,16 @@
     .delete {
         margin-right: 6px;
     }
-    .red-tip {
+    .red {
         font-size: 12px;
-        color: #F00;
+        color: rgb(240, 68, 68);
+    }
+    .user-content-wrap {
+        padding: 10px;
+        line-height: 26px;
+    }
+    .user-content-wrap label {
+        margin-right: 5px;
     }
 </style>
 <div class="member-list-wrap">
@@ -62,8 +69,9 @@
                 <th>建立日期</th>
                 <th>更新日期</th>
                 <th>等級</th>
-                <th>消費總額</br><span class="red-tip">(完成訂單額度)</span></th>
+                <th>消費總額</br><span class="red">(完成訂單額度)</span></th>
                 <th>操作</th>
+                <th>用戶資料</th>
             </tr>
         </thead>
         <tbody>
@@ -237,22 +245,52 @@
                         levelOption.push('<option value="'+ item.id +'">'+ item.levelName +'</option>');
                     });
                     var levelSelect = '<select name="level">' + levelOption.join('') + '</select>';
+                    var mapUserInfo = {
+                        account: '帳號',
+                        firstName: '姓氏',
+                        lastName: '姓名',
+                        phone: '電話',
+                        address: '地址',
+                        email: '郵件地址',
+                        created_at: '建立時間'
+                    }
 
                     if (res.data.userList.length) {
                         listDomAll = [];
                         res.data.userList.forEach(function(item, index) {
-                            var listDom =
-                                '<tr class="tr-'+index+'">'+ 
-                                    "<td>" +item.name +"</td>"+
+                            var detailBtnTd = $("<td></td>");
+                            var detailBtn = $("<button>詳細資料</button>").appendTo(detailBtnTd);
+                            var userDetail = $('<div style="display: none;"></div>');
+                            var content = $('<div class="user-content-wrap"></div>').appendTo(userDetail);
+
+                            if (Object.keys(item.info).length) {
+                                Object.keys(mapUserInfo).forEach(function(info){
+                                    $(content).append('<div><label>' + mapUserInfo[info] + ':</label>' + item.info[info] + '</div>');
+                                });
+                            }
+
+                            $(detailBtn).bind('click', function(e) {
+                                e.preventDefault();
+                                $(userDetail).dialog({
+                                    resizable: false,
+                                    width: 300,
+                                    height: 300,
+                                    modal: true
+                                });
+                            });
+
+                            var listTr = $('<tr class="tr-'+index+'"></tr>');
+                            listTr.append("<td>" +item.name +"</td>"+
                                     "<td>" +item.email +"</td>"+
                                     "<td>" +item.created_at +"</td>"+
                                     "<td>" +item.updated_at +"</td>"+
                                     '<td class="level-'+ item.id +'">' + levelSelect +"</td>"+
                                     "<td>" +item.cost +"</td>"+
-                                    "<td>" +_this.commonBtn(item.id, item.name)+ "</td>"+
-                                "</tr>";
+                                    "<td>" +_this.commonBtn(item.id, item.name)+ "</td>");
+                            listTr.append(detailBtnTd);
+                            listTr.append(userDetail);
 
-                            $('#memberTable tbody').append(listDom);
+                            $('#memberTable tbody').append(listTr);
                             $('#memberTable tbody .tr-' + index + ' select[name="level"]').val(item.level).data('level', item.level).data('id', item.id);
                         });
 

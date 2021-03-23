@@ -199,22 +199,34 @@ class LevelController extends Controller
             $this->response['message'] = '等級晉級金額: 晉級金額請高於〔'. $levelLast['levelName'] .'〕';
             return response()->json($this->response);
         }
-
-        $Create=Level::create([
-            'levelName' =>$data['levelName'],
-            'offer' =>$data['offer'],
-            'offerType' =>array_key_exists('offerType' , $data) ? $data['offerType'] : null,
-            'full' =>array_key_exists('full' , $data) ? $data['full'] : null,
-            'discount' =>array_key_exists('discount' , $data) ? $data['discount'] : null,
-            'present' =>array_key_exists('present' , $data) ? $data['present'] : null,
-            'upgradeAmount'=>$data['upgradeAmount'],
-        ]);
+        try {
+            $queryStatus = true;
+            Level::create([
+                'levelName' =>$data['levelName'],
+                'offer' =>$data['offer'],
+                'offerType' =>array_key_exists('offerType' , $data) ? $data['offerType'] : null,
+                'full' =>array_key_exists('full' , $data) ? $data['full'] : null,
+                'discount' =>array_key_exists('discount' , $data) ? $data['discount'] : null,
+                'present' =>array_key_exists('present' , $data) ? $data['present'] : null,
+                'upgradeAmount'=>$data['upgradeAmount'],
+            ]);
+        } catch (\Throwable $th) {
+            $queryStatus = false;
+            $errorCode = $th->getCode();
+            switch ($errorCode) {
+                case '23000':
+                    $this->response['code'] = 399013;
+                    $this->response['message'] =  '等級名稱重複';
+                    break;
+                default:
+                    $this->response['code'] = 399014;
+                    $this->response['message'] =  '新增等級設定問題, 請聯繫客服';
+                    break;
+            }
+        }
         
-        if ($Create) {
+        if ($queryStatus) {
             $this->response['message'] = '建立成功';
-        } else {
-            $this->response['code'] = 5003;
-            $this->response['message'] = '建立失敗';
         }
 
         return response()->json($this->response);
@@ -257,20 +269,33 @@ class LevelController extends Controller
             }
         }
 
-        $LevelUpdate=Level::where('id', $data['id'])->update([
-            'levelName' =>$data['levelName'],
-            'offer' =>$data['offer'],
-            'offerType' =>array_key_exists('offerType' , $data) ? $data['offerType'] : null,
-            'full' =>array_key_exists('full' , $data) ? $data['full'] : null,
-            'discount' =>array_key_exists('discount' , $data) ? $data['discount'] : null,
-            'present' =>array_key_exists('present' , $data) ? $data['present'] : null
-        ]);
-        
-        if ($LevelUpdate) {
+        try {
+            $queryStatus = true;
+            $LevelUpdate=Level::where('id', $data['id'])->update([
+                'levelName' =>$data['levelName'],
+                'offer' =>$data['offer'],
+                'offerType' =>array_key_exists('offerType' , $data) ? $data['offerType'] : null,
+                'full' =>array_key_exists('full' , $data) ? $data['full'] : null,
+                'discount' =>array_key_exists('discount' , $data) ? $data['discount'] : null,
+                'present' =>array_key_exists('present' , $data) ? $data['present'] : null
+            ]);
+        } catch (\Throwable $th) {
+            $queryStatus = false;
+            $errorCode = $th->getCode();
+            switch ($errorCode) {
+                case '23000':
+                    $this->response['code'] = 399013;
+                    $this->response['message'] =  '等級名稱重複';
+                    break;
+                default:
+                    $this->response['code'] = 399014;
+                    $this->response['message'] =  '編輯等級設定問題, 請聯繫客服';
+                    break;
+            }
+        }
+
+        if ($queryStatus) {
             $this->response['message'] = '更新成功';
-        } else {
-            $this->response['code'] = 5004;
-            $this->response['message'] = '更新失敗';
         }
 
         return response()->json($this->response);

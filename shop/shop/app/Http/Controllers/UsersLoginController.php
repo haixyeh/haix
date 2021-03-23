@@ -147,6 +147,11 @@ class UsersLoginController extends Controller
                 'name' => 'order',
                 'open' => $reslut['is_login']
             ),
+            array(
+                'link' => '/web/contact',
+                'name' => 'contact',
+                'open' => 'Y'
+            ),
         );
         $this->response['data'] = $reslut;
         RedisServer::set('name', json_encode($reslut));

@@ -42,6 +42,31 @@ class UsersController extends Controller
         return response()->json($this->response);
     }
 
+    // 使用者資料取得
+    public function userDataGet(Request $request)
+    {
+        $session = request()->cookie('SESSION');
+        $users = array([]);
+        if ($session) {
+            $users = Users::where([
+                'api_token' => $session,
+            ])->first();
+            $users['token'] = $session;
+
+            unset($users['cost']);
+            unset($users['coupon']);
+            unset($users['created_at']);
+            unset($users['id']);
+            unset($users['level']);
+            unset($users['updated_at']);
+            
+            return $this->success($users);
+        }
+        $this->response['code'] = 1031;
+        $this->response['message'] =  '用戶未登入, 請重新登入';
+        return response()->json($this->response);
+    }
+
     // 註冊
     public function store(Request $request)
     {
@@ -85,7 +110,9 @@ class UsersController extends Controller
             $this->response['message'] = $error;
             return response()->json($this->response);
         }
+
         $api_token= Str::random(10);
+    
         try {
             $queryStatus = true;
             Users::create([
@@ -108,8 +135,7 @@ class UsersController extends Controller
                     break;
             }
         }
-        
-        
+
         if ($queryStatus) {
             $this->response['message'] = '建立成功';
             // 成功後建立用戶資料
@@ -132,7 +158,16 @@ class UsersController extends Controller
 
     // 查詢所有會員
     public function show() {
+        $usersInfo =  UserInfo::get()->all();
         $usersAll = Users::get()->all();
+        $usersInfoAry = array();
+
+        foreach ($usersInfo as $key => $user) {
+            $usersInfoAry[$user->account] = $user;
+        }
+        foreach ($usersAll as $key => $user) {
+            $user['info']= $usersInfoAry[$user->name];
+        }
         $result = array(
             'userList'=> $usersAll,
             'levelList'=> LevelController::instance()->getAllLevel()
@@ -285,7 +320,7 @@ class UsersController extends Controller
         $data = $request->all();
         $validator = Validator::make($data, [
             'account' => ['required', 'string'],
-            'id' => ['required', 'number'],
+            'id' => ['required', 'numeric'],
             'password' => ['required', 'string', 'min:6', 'max:15', 'regex:/^[A-Za-z0-9]+$/'],
         ],[
             'id.required' => '列表key值有誤',

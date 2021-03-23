@@ -116,7 +116,7 @@
             </div>
             <div class="list-wrap">
                 <div class="list-input">配送方式: <input type="radio" id="sendWay" checked="checked"><label for="sendWay" >貨到付款</label></div>
-                <div class="list-input">購買數量: <input type="number" name="" id="buyCount"></div>
+                <div class="list-input buy-number">購買數量: <input type="number" name="" id="buyCount" min="0" max="9999"></div>
                 <div class="list-input">商品剩餘數量：<span id="goodsTotal"></span></div>
             </div>
             <div class="btn-wrap">
@@ -138,7 +138,11 @@
                     $("#title").text(data.name);
                     $("#info").text(data.info);
                     $("#priceNum").text(data.amount);
-                    $('#goodsTotal').text(data.total)
+                    $('#goodsTotal').text(data.total ? data.total : '商品已售罄');
+                    if (!data.total) {
+                        $('.btn-wrap').hide();
+                        $('.buy-number').hide();
+                    }
                     var images = JSON.parse(data.images);
                     images.forEach(function(img) {
                         $('#sliderFor').append(

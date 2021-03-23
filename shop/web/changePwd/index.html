@@ -130,14 +130,35 @@
         $(document).ready(function(){
             var urlSearch = new window.URLSearchParams(window.location.search);
             var params = urlSearch.get('params');
-            if (!params) {
-                alert('連結無效');
-                location.href = '/web/';
+            var ajaxUserData = {};
+            var email;
+            var name;
+            var token;
+            
+
+            if (params) {
+                params = atob(params);
+                email = getUrlParameter('email', params);
+                name = getUrlParameter('name', params);
+                token = getUrlParameter('token', params);
             }
-            params = atob(params);
-            var email = getUrlParameter('email', params);
-            var name = getUrlParameter('name', params);
-            var token = getUrlParameter('token', params);
+            if (!params) {
+                $.ajax({
+                    url:"/api/haix/userData",
+                    async : false,
+                    success:function(res){
+                        if (res.code !== 200) {
+                            alert('無法修改');
+                            location.href = '/web/'
+                            return;
+                        }
+                        email = res.data.email;
+                        name = res.data.name;
+                        token = res.data.token;
+                    }}
+                );
+            }
+            
             $('#account').val(name);
             $('#email').val(email);
 

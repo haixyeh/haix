@@ -50,6 +50,7 @@
     </div>
     <script src="/web/js/jquery-ui.js"></script>
     <script>
+        var isLogin = 'N';
         $(document).ready(function(){
             $("#loadingOn").show();
             $.ajax({
@@ -65,7 +66,8 @@
                             location.href = '/web';
                             return;
                         }
-
+                        // 登入資訊
+                        isLogin = 'Y';
                         // 允許開啟查看購物車功能
                         $('#openCar').show();
                         // 允許開啟用戶信息
@@ -173,13 +175,14 @@
                                     $('#levelMemDialog').html('');
                                     $('#levelMemDialog').append(currentOfferInfo);
                                     $('#levelMemDialog').append('<hr>');
-                                    
+
                                     if (!nextOfferInfo) {
                                         $('#levelMemDialog').append('<div>您已達到最高等級!!!</div>');
                                     } else {
+                                        var nextLevelBalace = balace > 0 ? '<span>距下一個等級, 尚差額度：$'+ balace +')：</span>' : '<div>已達到晉級標準, 請消費過後查看是否晉級</div>';
                                         $("<div></div>").html(
                                             '<div class="next-level">'+
-                                                '<span>距下一個等級, 尚差額度：$'+ balace +')：</span>'+
+                                                nextLevelBalace +
                                                 '<div class="w3-progress-container">'+
                                                     '<div id="myBar" class="w3-progressbar">'+
                                                         '<div>$'+ userCost + '</div>'+
@@ -196,7 +199,7 @@
                                         height: nextOfferInfo ? 300 : 165,
                                         modal: true
                                     });
-                                    $('#myBar').css('width', prsent + '%');
+                                    $('#myBar').css('width', (prsent <= 100 ? prsent : '100') + '%');
                                 }                                
                             }
                         }

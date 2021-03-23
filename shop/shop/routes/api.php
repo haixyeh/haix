@@ -10,9 +10,11 @@ Route::get('/haix/goods/list','GoodsController@mapCategories'); // 商品列表
 Route::get('/haix/goods/single/{id}','GoodsController@single'); // 查看單一商品
 Route::post('/haix/getPwd', 'UsersController@getPwd'); // 取得密碼 - 寄送至電子郵件
 Route::post('/haix/changePwd/', 'UsersController@fixUpdatePwd');  // 客端忘記密碼修改
+Route::post('/haix/contact', 'UserInfoController@contact');  // 會員聯絡我們
 
 Route::group(['middleware' => ['haixauth:api']], function(){
     Route::get('/haix/userInfo', 'UserInfoController@show');  // 會員資料顯示
+    Route::get('/haix/userData', 'UsersController@userDataGet');  // 會員資料取得
     Route::middleware('captchauth')->post('/haix/userInfo/edit', 'UserInfoController@edit');  // 編輯會員資料
     Route::get('/haix/memLevel', 'LevelController@memLevel');  // 會員等級
     Route::get('/haix/out','UsersLogoutController@UsersLogout'); // 會員登出
