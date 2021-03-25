@@ -202,22 +202,66 @@ class OrdersController extends Controller
     {
         $account = $request->input('account');
         $name = $request->input('userName');
-        $whereObj = array('account'=> $account, 'name'=> $name);
-        if (empty($name)) {
-            unset($whereObj['name']);
+
+        $data = array(
+            'account'=> $account ? $account : '',
+            'name'=> $name ? $name : '',
+        );
+        $validator = Validator::make($data, [
+            'name' => ['string', 'max:30', 'regex:/^[^0-9,:;!@#$%^&*?<>()+=`|[\]{}\\".~\-\0]*$/'],
+            'account' => ['string', 'max:30', 'regex:/^[A-Za-z][A-Za-z0-9_]+$/'],
+        ],[
+            'name.regex' =>'收件者：請勿輸入特殊符號',
+            'name.max' => '收件者：請輸入1～30字元',
+            'account.max' => '帳號：請輸入4～15字元',
+            'account.regex' => '帳號：請輸入英文加數字, 字首需是英文',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+
+            switch (true) {
+                case $validator->errors()->has('name'):
+                    $this->response['code'] = 3501; // 帳號驗證問題
+                    break;
+                case $validator->errors()->has('account');
+                    $this->response['code'] = 3502; // 收件者驗證問題
+                    break;
+                default:
+                    $this->response['code'] = 3503;
+                    $this->response['message'] =  '訂單管理問題, 請聯繫客服';
+                    break;
+            }
+
+            $this->response['message'] = $error;
+            return response()->json($this->response);
         }
-        if (empty($account)) {
-            unset($whereObj['account']);
-        }
+
         if ($back) {
             $list = Order::having('cancelOrder', 'N')
-            ->having('status', 'R')->orHaving('status', 'T')->orHaving('status', 'F')
-            ->orHaving('status', 'L')->orderBy('id', 'desc')->get()->all();
+            ->having('status', 'R')
+            ->orHaving('status', 'T')
+            ->orHaving('status', 'F')
+            ->orHaving('status', 'L')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->all();
         } else {
-            $list = Order::where($whereObj)->having('cancelOrder', 'N')
-            ->having('status', 'N')->orHaving('status', 'Y')
-            ->orHaving('status', 'S')->orHaving('status', 'E')->orHaving('status', 'L')
-            ->orderBy('id', 'desc')->get()->all();
+            $list = Order::when($account, function($query) use ($account) {
+                return $query->where('account', $account);
+            })
+            ->when($name, function($query) use ($name) {
+                return $query->where('name', 'like', '%' . $name . '%');
+            })
+            ->having('cancelOrder', 'N')
+            ->having('status', 'N')
+            ->orHaving('status', 'Y')
+            ->orHaving('status', 'S')
+            ->orHaving('status', 'E')
+            ->orHaving('status', 'L')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->all();
         }
         foreach ($list as $key => $item) {
             $goodsIndo = json_decode($item['goodsIndo']);

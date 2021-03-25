@@ -58,9 +58,34 @@
     .user-content-wrap label {
         margin-right: 5px;
     }
+    .member-list-wrap .top-wrap {
+        background: #B2B9B0; /* Old browsers */
+        background: -moz-linear-gradient(-45deg,  #B2B9B0 0%, #000 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(-45deg,  #B2B9B0 0%,#000 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(135deg,  #B2B9B0 0%,#000 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        color: #FFF;
+    }
 </style>
 <div class="member-list-wrap">
-    <h3 class="title">會員列表</h3>
+    <div class="top-wrap clearfix">
+        <div class="search-box-wrap">
+            <div class="input-wrap">
+                <label for="account">帳號</label>
+                <input type="text" id="account" name="account" placeholder="請輸入帳號(可為空)">
+            </div>
+            <div class="input-wrap">
+                <label for="email">郵件</label>
+                <input type="text" id="email" name="email" placeholder="請輸入郵件(可為空)">
+            </div>
+            <div class="input-wrap">
+                <label for="level">等級</label>
+                <span id="levelSelect"></span>
+            </div>
+            <button class="minsize button pink search-btn" id="memberClear">清除</button>
+            <button class="minsize button green search-btn" id="memberSearch">搜尋</button>
+        </div>
+        <h3 class="title">會員列表</h3>
+    </div>
     <table id="memberTable">
         <thead>
             <tr>
@@ -106,6 +131,7 @@
         stashBeforeLevel: null,
         changePsdId: null,
         changePsdName: '',
+        changeLevelOption: '',
         changePsdOpen: function(id, name) {
             var _this = this;
             // 初次載入顯示驗證碼
@@ -222,10 +248,15 @@
             );
         },
         // 全部會員列表(ajax)
-        getUserList: function() {
+        getUserList: function(paramObj = {}) {
             var _this = this;
+            var paramsUrl = '';
+            if (Object.keys(paramObj).length) {
+                var params = $.param(paramObj);
+                paramsUrl = '?' + params;
+            }
             $.ajax({
-                url:"/api/admin/userList",
+                url:"/api/admin/userList" + paramsUrl,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json;charset=utf-8",
@@ -241,10 +272,29 @@
                     var userList = res.data.userList;
                     var levelList = res.data.levelList;
                     var levelOption = [];
+                    var levelSearchOption = [];
+
+                    levelSearchOption.push('<option value="">全部</option>');
+
                     levelList.forEach(function(item){
-                        levelOption.push('<option value="'+ item.id +'">'+ item.levelName +'</option>');
+                        var optionContent = '<option value="'+ item.id +'">'+ item.levelName +'</option>';
+                        levelOption.push(optionContent);
+                        levelSearchOption.push(optionContent);
                     });
                     var levelSelect = '<select name="level">' + levelOption.join('') + '</select>';
+                    var levelSearch = $('<select name="levelSearch">' + levelSearchOption.join('') + '</select>');
+
+                    // 更改搜尋等級條件
+                    if (_this.changeLevelOption) {
+                        $(levelSearch).val(_this.changeLevelOption);
+                    }
+                    $(levelSearch).on('change', function() {
+                        _this.changeLevelOption = $(this).val();
+                    });
+
+                    $('#levelSelect').html('');
+                    $('#levelSelect').append(levelSearch);
+
                     var mapUserInfo = {
                         account: '帳號',
                         firstName: '姓氏',
@@ -265,6 +315,9 @@
 
                             if (Object.keys(item.info).length) {
                                 Object.keys(mapUserInfo).forEach(function(info){
+                                    if (!item.info[info]) {
+                                        return;
+                                    }
                                     $(content).append('<div><label>' + mapUserInfo[info] + ':</label>' + item.info[info] + '</div>');
                                 });
                             }
@@ -289,11 +342,11 @@
                                     "<td>" +_this.commonBtn(item.id, item.name)+ "</td>");
                             listTr.append(detailBtnTd);
                             listTr.append(userDetail);
+                            
 
                             $('#memberTable tbody').append(listTr);
                             $('#memberTable tbody .tr-' + index + ' select[name="level"]').val(item.level).data('level', item.level).data('id', item.id);
                         });
-
                         // $('#memberTable').find('tbody').html(listDomAll);
                         _this.tableCreatAfter();
                     }
@@ -341,6 +394,24 @@
             });
             // 獲取user
             _this.getUserList();
+            // 搜尋
+            $('#memberSearch').on('click',function() {
+                var params = {};
+                $('.search-box-wrap').find('input, select').each(function(index, ele) {
+                    var filedName = $(ele).attr('name');
+                    var filedValue = $(ele).val();
+                    params[filedName] = filedValue;
+                });
+                _this.getUserList(params);
+            });
+            $('#memberClear').on('click', function(){
+                $('.search-box-wrap').find('input, select').each(function(index, ele) {
+                    $(ele).val('');
+                    if ($(this)[0]['nodeName'] === 'SELECT') {
+                        member.changeLevelOption = '';
+                    }
+                });
+            });
         }
     };
     member.init();

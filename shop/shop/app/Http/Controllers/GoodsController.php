@@ -22,9 +22,9 @@ class GoodsController extends Controller
     }
 
     // 全部商品
-    public function showAllList()
+    public function showAllList(Request $request)
     {
-        $data = $this->show(true);
+        $data = $this->show($request,true);
 
         return $this->success($data);
     }
@@ -232,9 +232,9 @@ class GoodsController extends Controller
     }
 
     // 前台, 依分類排版
-    function mapCategories()
+    function mapCategories(Request $request)
     {
-        $data = $this->show(false);
+        $data = $this->show($request,false);
         $categories = new CategoriesController();
         $categoriesAll = $categories-> showAllData();
         $newCategoriesList = array();
@@ -271,14 +271,34 @@ class GoodsController extends Controller
     }
 
     // 共用 - 查詢所有商品
-    public function show($isOrderDate)
+    public function show(Request $request, $isOrderDate)
     {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $keywords = $request->input('keywords');
         $list = null;
+
         if ($isOrderDate) {
-            $list = Goods::having('isDestroy', '=', 'N')->orderBy('startDate')->get()->all();
+            $list = Goods::having('isDestroy', '=', 'N')
+                ->when($startDate, function ($query) use ($startDate) {
+                    return $query->whereDate('startDate', '>=', $startDate);
+                })
+                ->when($endDate, function ($query) use ($endDate) {
+                    return $query->whereDate('endDate', '<=', $endDate);
+                })
+                ->when($keywords, function ($query) use ($keywords) {
+                    return $query->where('info', 'like', '%' . $keywords. '%')
+                    ->orWhere('name', 'like', '%' . $keywords. '%');
+                })
+                ->orderBy('startDate')
+                ->get()
+                ->all();
         }
         if (!$isOrderDate) {
-            $list = Goods::having('isDestroy', '=', 'N')->orderBy('isRecommon', 'desc')->get()->all();
+            $list = Goods::having('isDestroy', '=', 'N')
+                ->orderBy('isRecommon', 'desc')
+                ->get()
+                ->all();
         }
 
         $start = array();

@@ -29,13 +29,16 @@
         display: table-row;
     }
     .tab-wrap button {
-        margin: 5px;
+        margin: 5px 5px 20px;
+        padding: 9px;
         border-radius: 5px;
         background: #AAA;
-        border: 1px solid #000;
+        border: 1px solid #A5A5A5;
         outline: none;
-        color: #FFF;
+        color: #131313;
+        text-shadow: 1px 1px 2px #EEE;
         cursor: pointer;
+        box-shadow: 2px 2px 3px #1B1A1A;
     }
     .tab-wrap .current {
         background: #A6D8DA;
@@ -50,21 +53,38 @@
     .search-wrap {
         margin-bottom: 10px;
     }
+    .order-list-wrap .top-wrap {
+        background: #B2B9B0; /* Old browsers */
+        background: -moz-linear-gradient(-45deg,  #656060 0%, #E0DFC5 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(-45deg,  #656060 0%,#E0DFC5 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(135deg,  #656060 0%,#E0DFC5 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        color: #FFF;
+    }
+    .order-list-wrap button {
+        margin-bottom: 10px;
+    }
+    .order-list-wrap button:last-child {
+        margin-bottom: 0;
+    }
+    td.oprate-btn-wrap {
+        text-align: center;
+    }
 </style>
-<div>
-    <h3 class="title">訂單管理</h3>
-    <div id="searchWrap" class="search-wrap">
-        <span class="input-list">
-            <label for="account">帳號</label>
-            <input type="text" name="account" id="account">
-        </span>
-        <span class="input-list">
-            <label for="userName">收件者</label>
-            <input type="text" name="userName" id="userName">
-        </span>
-        <button id="search" class="minsize button green">搜尋</button>
+<div class="order-list-wrap">
+    <div class="top-wrap clearfix">
+        <div id="searchWrap" class="search-box-wrap">
+            <div class="input-wrap">
+                <label for="account">帳號</label>
+                <input type="text" name="account" id="account" placeholder="請輸入帳號">
+            </div>
+            <div class="input-wrap">
+                <label for="userName">收件者</label>
+                <input type="text" name="userName" id="userName" placeholder="請輸入收件者">
+            </div>
+            <button id="search" class="minsize button green">搜尋</button>
+        </div>
+        <h3 class="title">訂單管理</h3>
     </div>
-    
     <div id="tab"></div>
     <table id="orderListTable" class="order-list-table">
         <thead>
@@ -93,15 +113,17 @@
                
                 $('#search').on('click', function() {
                     var obj = {};
-                    $('.search-wrap').find('input').each(function(index, item) {
+                    $('.search-box-wrap').find('input').each(function(index, item) {
                         var filedName = $(item).attr('name');
                         var filedValue = $(item).val();
                         obj[filedName] = filedValue;
                     })
+                    _this.searchObject = obj;
                     _this.getOrderList(obj);
                 });
                 _this.setTabButton();
             },
+            searchObject: {},
             orderData: [], // 訂單內容數據
             tabItemName: {
                 all: '全部',
@@ -133,14 +155,11 @@
                 });
                 $(tabWrap).appendTo('#tab');
             },
-            changeStatus: function(selfThis, status) {
+            changeStatus: function(status, id) {
                 var _this = this;
-                var inputVal = status ? status : $(selfThis).val();
-                var id = $(selfThis).data('id');
-                var listIndex = $(selfThis).parents('tr').data('index');
                 var postData = {
                     id: id,
-                    status: inputVal
+                    status: status
                 };
                 $.ajax({
                     url:"/api/admin/goods/order/status",
@@ -156,41 +175,33 @@
                         if (res.code === 200 && res.message) {
                             alert(res.message);
                         }
-                        _this.orderData[listIndex]['status'] = inputVal;
+                        _this.getOrderList(_this.searchObject);
                         _this.setTable();
-
                     }}
                 );
             },
             setStatus: function(status, id) {
                 var _this = this;
                 var goodsStatusOptions = $("<td></td>");
-                // 已完成
-                if (status === 'E') {
-                    return goodsStatusOptions.text('訂單已完成');
+                switch (status) {
+                    case 'E':
+                        goodsStatusOptions.text('訂單已完成');
+                        break;
+                    case 'L':
+                        goodsStatusOptions.text('訂單已完成');
+                        break;
+                    case 'N':
+                        goodsStatusOptions.text('未接受訂單');
+                        break;
+                    case 'Y':
+                        goodsStatusOptions.text('已接受訂單');
+                        break;
+                    case 'S':
+                        goodsStatusOptions.text('出貨中');
+                        break;
+                    default:
+                        break;
                 }
-                if (status === 'L') {
-                    return goodsStatusOptions.text('訂單已完成(強制取消再退貨)');
-                }
-                
-                var select = $('<select class="goods-status" data-id="'+ id +'"></select>');
-                var options = $(
-                    '<option value="N">未接受訂單</option>' +
-                    '<option value="Y">已接受訂單</option>' +
-                    '<option value="S">出貨中</option>'
-                    // '<option value="E">完成訂單</option>'
-                );
-                $(select).bind('change', function() { var selfThis = this; _this.changeStatus(selfThis); });
-
-                options.appendTo(select);
-                goodsStatusOptions.append(select);
-                
-                $(goodsStatusOptions).find('option').each(function() {
-                    if ($(this).val() === status) {
-                        $(this).attr('selected', true);
-                        return false;
-                    }
-                });
 
                 return goodsStatusOptions;
             },
@@ -207,7 +218,26 @@
             },
             setOprate: function(id, status) {
                 var _this = this;
-                var oprate = $('<td></td>');
+                var oprate = $('<td class="oprate-btn-wrap"></td>');
+
+                var checkBtn = (status === 'N') ? $('<button class="green minsize">接受訂單</button>') : null;
+                var cancelOrderBtn = (status === 'Y') ? $('<button class="gray minsize">未接受訂單</button>') : null;
+                var shipmentBtn = (status === 'Y') ? $('<button class="green minsize">訂單已出貨</button>') : null;
+
+                $(checkBtn).bind('click', function(e) {
+                    e.preventDefault();
+                    _this.changeStatus('Y', id);
+                });
+                $(cancelOrderBtn).bind('click', function(e) {
+                    e.preventDefault();
+                    _this.changeStatus('N', id);
+                });
+                $(shipmentBtn).bind('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('是否確認, 已出貨訂單？')) {
+                        _this.changeStatus('S', id);
+                    }
+                });
 
                 var cancelBtn = (status === 'N') ? $('<button class="pink minsize">訂單取消</button>') : null;
                 if(cancelBtn) {
@@ -239,11 +269,11 @@
                     $(finishOrderBtn).bind('click', function(e) {
                         e.preventDefault();
                         if (confirm('是否確定結案？ \n 完成後即加入會員消費額度')) {
-                            _this.changeStatus(this, 'E');
+                            _this.changeStatus('E', id);
                         }
                     });
                 }
-                return oprate.append([cancelBtn, finishOrderBtn]);
+                return oprate.append([checkBtn, shipmentBtn,cancelOrderBtn, cancelBtn, finishOrderBtn]);
             },
             setMemo: function(id, filedValue) {
                 var tdContent = $('<td title="點擊兩下即可修改備註"></td>');
@@ -301,6 +331,9 @@
                     dataType: "json",
                     contentType: "application/json;charset=utf-8",
                     success:function(res){
+                        if (res.message) {
+                            alert(res.message);
+                        }
                         if (!res || !res.data) {
                             return;
                         }
@@ -313,13 +346,12 @@
             setTable: function(search = null) {
                 var _this = this;
                 $("#oderList").html('');
-                console.log(_this.orderData, '_this.orderData');
                 _this.orderData.forEach((list, index) => {
                     _this.tr = $('<tr class="tr-status-'+ list.status  +'" data-index="'+ index +'"></tr>').appendTo("#oderList");
                     if (search !== 'all' && search && list.status !== search) {
                         return;
                     }
-                    
+
                     $('#orderListTable thead').find('th').each(function(index, ele) {
                         var filedName = $(ele).attr('name');
 

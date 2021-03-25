@@ -157,9 +157,24 @@ class UsersController extends Controller
     }
 
     // 查詢所有會員
-    public function show() {
+    public function show(Request $request) {
+        $account = $request->input('account');
+        $email = $request->input('email');
+        $level = $request->input('levelSearch');
+
         $usersInfo =  UserInfo::get()->all();
-        $usersAll = Users::get()->all();
+        $usersAll = Users::
+            when($account, function ($query) use ($account) {
+                return $query->where('name', 'like', '%' . $account. '%');
+            })
+            ->when($email, function ($query) use ($email) {
+                return $query->where('email', $email);
+            })
+            ->when($level, function ($query) use ($level) {
+                return $query->where('level', $level);
+            })
+            ->get()
+            ->all();
         $usersInfoAry = array();
 
         foreach ($usersInfo as $key => $user) {

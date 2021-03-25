@@ -295,3 +295,23 @@ h3.title {
     content: " )";
     font-size: 14px;
 }
+
+.top-wrap {
+    margin-bottom: 10px;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #F5F5F5;
+    box-shadow: 2px 3px 6px #656565;
+}
+.search-box-wrap {
+    float: right;
+    margin-bottom: 10px;
+    width: 467px;
+    text-align: right;
+}
+.search-box-wrap input {
+    color: #000;
+}
+.input-list {
+    margin-bottom: 5px;
+}

@@ -2,14 +2,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
 <style>
     .tab {
+        position: relative;
         float: left; 
-        margin-right: 2px;
+        margin-right: 5px;
         border-radius: 3px 3px 0 0;
         border: 1px solid #666;
         border-bottom: 0;
         padding: 5px 10px;
         background: #FFF;
-        overflow: hidden;
         outline: none;
         cursor: pointer;
     }
@@ -24,10 +24,45 @@
         height: 110px;
         overflow-y: auto;
     }
+    .goods-list-wrap .top-wrap {
+        background: #B2B9B0; /* Old browsers */
+        background: -moz-linear-gradient(-45deg,  #B2B9B0 0%, #828c65 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(-45deg,  #B2B9B0 0%,#828c65 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(135deg,  #B2B9B0 0%,#828c65 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        color: #FFF;
+    }
+    .length-icon {
+        position: absolute;
+        top: -8px;
+        right: -5px;
+        padding: 0 2px;
+        border-radius: 99em;
+        height: 15px;
+        background: rgb(253, 82, 82);
+        color: #FFF;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
-<div>
-    <h3 class="title">商品列表</h3>
+<div class="goods-list-wrap">
+    <div class="top-wrap clearfix">
+        <div class="search-box-wrap">
+            <div class="input-wrap">
+                <label for="startDate">上架時間</label>
+                <input type="date" id="startDate" name="startDate">
+            </div>
+            <div class="input-wrap">
+                <label for="endDate">下架時間</label>
+                <input type="date" id="endDate" name="endDate">
+            </div>
+            <div class="input-wrap">
+                <label for="keywords">商品名稱/描述</label>
+                <input type="text" id="keywords" name="keywords" placeholder="請輸入關鍵字(可為空)">
+            </div>
+            <button class="minsize button pink search-btn" id="goodsClear">清除</button>
+            <button class="minsize button green search-btn" id="goodsSearch">搜尋</button>
+        </div>
+        <h3 class="title">商品列表</h3>
+    </div>
     <div id="btnWrap"></div>
     <table id="goodsTable">
         <thead>
@@ -172,7 +207,7 @@
             var _this = this;
             tabArray.forEach(function(item){
                 tabName = (_this.tabItemName[item] || item);
-                $("#btnWrap").append('<button class="js-'+ item +'  tab">' + tabName + '</button>');
+                $("#btnWrap").append('<button class="js-'+ item +'  tab">' + tabName + '<span class="length-icon"></span>' +'</button>');
                 $('.js-' + item).on('click', function() {
                     $(this).addClass('active');
                     $(this).siblings('button').removeClass('active');
@@ -199,6 +234,10 @@
             var setTdContent = function(classNames, content) {
                 return '<td class="'+ classNames +'">'+ content +'</td>';
             }
+            // 數量
+            Object.keys(_this.tabelList).forEach(function(key) {
+                $('#btnWrap .js-' + key + ' .length-icon').text(_this.tabelList[key].length);
+            });
             _this.tabelList[_this.tabCurrent].forEach(function(item, index) {
                 var tdContent = [];
                 _this.fieldAry.forEach(function(fieldName) {
@@ -254,11 +293,16 @@
             $('#goodsTable').find('tbody').html(trContent);
             _this.mainBtn();
         },
-        goodsList: function() {
+        goodsList: function(paramObj = {}) {
             var _this = this;
             var formData = new FormData();
+            var paramsUrl = '';
+            if (Object.keys(paramObj).length) {
+                var params = $.param(paramObj);
+                paramsUrl = '?' + params;
+            }
             $.ajax({
-                url:"/api/admin/goods/list",
+                url:"/api/admin/goods/list" + paramsUrl,
                 type: "GET",
                 success:function(res){
                     errorHandle(res, true);
@@ -275,6 +319,21 @@
         init: function() {
             var _this = this;
             _this.goodsList();
+
+            $('#goodsSearch').on('click',function() {
+                var params = {};
+                $('.search-box-wrap').find('input').each(function(index, ele) {
+                    var filedName = $(ele).attr('name');
+                    var filedValue = $(ele).val();
+                    params[filedName] = filedValue;
+                });
+                _this.goodsList(params);
+            });
+            $('#goodsClear').on('click', function(){
+                $('.search-box-wrap').find('input').each(function(index, ele) {
+                    $(ele).val(null);
+                });
+            });
         }
     };
     goods.init();
