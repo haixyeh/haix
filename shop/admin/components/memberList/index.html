@@ -397,7 +397,7 @@
             // 搜尋
             $('#memberSearch').on('click',function() {
                 var params = {};
-                $('.search-box-wrap').find('input, select').each(function(index, ele) {
+                $('.member-list-wrap .search-box-wrap').find('input, select').each(function(index, ele) {
                     var filedName = $(ele).attr('name');
                     var filedValue = $(ele).val();
                     params[filedName] = filedValue;

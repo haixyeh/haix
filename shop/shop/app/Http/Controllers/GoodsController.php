@@ -276,6 +276,7 @@ class GoodsController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
         $keywords = $request->input('keywords');
+        $goodsType = $request->input('goodsType');
         $list = null;
 
         if ($isOrderDate) {
@@ -289,6 +290,9 @@ class GoodsController extends Controller
                 ->when($keywords, function ($query) use ($keywords) {
                     return $query->where('info', 'like', '%' . $keywords. '%')
                     ->orWhere('name', 'like', '%' . $keywords. '%');
+                })
+                ->when($goodsType, function ($query) use ($goodsType) {
+                    return $query->where('goodsType', $goodsType);
                 })
                 ->orderBy('startDate')
                 ->get()

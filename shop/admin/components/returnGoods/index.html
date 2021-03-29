@@ -15,14 +15,6 @@
     .button:last-child {
         margin-bottom: 0;
     }
-    .page-tab {
-        margin: 20px 0;
-    }
-    /* .apply-list-wrap .title,
-    .order-list-wrap .title {
-        margin-bottom: 5px;
-        color: #7D9A9E;
-    } */
     .red-text,
     .green-text,
     .gray-text {
@@ -67,29 +59,63 @@
     .order-list-wrap .td-memo span {
         color: #7D9A9E;
     }
-    button.finish-btn {
+    .apply-list-wrap .button {
         display: block;
     }
+    .return-goods-wrap .top-wrap {
+        background: #F76F6F; /* Old browsers */
+        background: -moz-linear-gradient(-7deg,  #d45252 0%, #151210 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(-7deg,  #d45252 0%,#151210 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(136deg, #d45252 0%,#151210 100%);/* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        color: #FFF;
+    }
+    .tip-text.while {
+        width: 350px;
+        color: #FFF;
+        font-size: 17px;
+        line-height: 20px;
+    }
+    .return-goods-wrap  td.list-oprate {
+        box-sizing: border-box;
+        width: 126px;
+    }
 </style>
-<div>
-    <h3 class="title">退貨管理</h3>
-    <div class="red-tip">退貨不重新紀錄貨品數量, 請收到貨品後, 確認貨物狀態正常, 於商品列表自行更新數量</div>
-    <div class="page-tab">
-        <button id="backApplySwitch">退貨申請資料</button>
-        <button id="backOrderSwitch">退貨訂單詳情</button>
+<div class="return-goods-wrap">
+    <div class="top-wrap clearfix">
+        <div class="search-box-wrap">
+            <div class="input-wrap">
+                <label for="startDate">申請開始區間</label>
+                <input type="date" id="startDate" name="startDate">
+            </div>
+            <div class="input-wrap">
+                <label for="endDate">申請結束區間</label>
+                <input type="date" id="endDate" name="endDate">
+            </div>
+            <div class="input-wrap">
+                <label for="orderNumber">退貨訂單號</label>
+                <input type="text" id="orderNumber" name="orderNumber" placeholder="請輸入訂單號(可為空)">
+            </div>
+            <div class="input-wrap">
+                <label for="rebackStatus">退貨狀態</label>
+                <select id="rebackStatus" name="rebackStatus"></select>
+            </div>
+            <button class="minsize button pink search-btn" id="returnClear">清除</button>
+            <button class="minsize button green search-btn" id="returnSearch">搜尋</button>
+        </div>
+        <h3 class="title">退貨管理</h3>
+        <div class="tip-text while">退貨不重新紀錄貨品數量, 請收到貨品後, 確認貨物狀態正常, 於商品列表自行更新數量</div>
     </div>
-    <div id="backOrderListWrap" class="order-list-wrap" style="display: none;">
-        <p class="title">退貨訂單詳情</p>
-        <table id="backOrderList" class="back-order-list">
+    <div id="backApplyListWrap" class="apply-list-wrap">
+        <table id="backApplyList" class="back-apply-list">
             <thead>
                 <tr></tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div id="backApplyListWrap" class="apply-list-wrap">
-        <p class="title">退貨申請資料</p>
-        <table id="backApplyList" class="back-apply-list">
+    <div id="backOrderListWrap" class="order-list-wrap" style="display: none;">
+        <p class="title">退貨訂單詳情</p>
+        <table id="backOrderList" class="back-order-list">
             <thead>
                 <tr></tr>
             </thead>
@@ -103,32 +129,35 @@
         backOrderData: {},
         init: function() {
             var _this = this;
-            $('#backApplySwitch').on('click', function() {
-                _this.getApplyList();
-                $('#backOrderListWrap').hide();
-                $('#backApplyListWrap').show();
-
-                if (!$(this).hasClass('.current')) {
-                    $(this).addClass('current');
-                }
-                if ($('#backApplySwitch').hasClass('.current')) {
-                    $('#backApplySwitch').removeClass('current')
-                }
-            });
-            $('#backOrderSwitch').on('click', function() {
-                _this.getRebackList();
-                $('#backOrderListWrap').show();
-                $('#backApplyListWrap').hide();
-
-                if (!$(this).hasClass('.current')) {
-                    $(this).addClass('current');
-                }
-                if ($('#backApplySwitch').hasClass('.current')) {
-                    $('#backApplySwitch').removeClass('current')
-                }
-            });
+            _this.getApplyList();
             
             $('#backApplySwitch').click();
+
+            // 搜尋框 選項
+            var goodsTypeList = [];
+            goodsTypeList.push('<option value="">全部</option>');
+            for (const key in _this.rebackStatusList) {
+                if (_this.rebackStatusList.hasOwnProperty(key)) {
+                    const name = _this.rebackStatusList[key];
+                    goodsTypeList.push('<option value="'+ key +'">'+ name +'</option>');
+                }
+            }
+
+            $('#rebackStatus').html(goodsTypeList);
+            $('#returnSearch').on('click',function() {
+                var params = {};
+                $('.return-goods-wrap .search-box-wrap').find('input, select').each(function(index, ele) {
+                    var filedName = $(ele).attr('name');
+                    var filedValue = $(ele).val();
+                    params[filedName] = filedValue;
+                });
+                _this.getApplyList(params);
+            });
+            $('#returnClear').on('click', function(){
+                $('.return-goods-wrap .search-box-wrap').find('input, select').each(function(index, ele) {
+                    $(ele).val('');
+                });
+            });
         },
         statusList: {
             'N': '待商家確認訂單',
@@ -161,13 +190,46 @@
                         'reason': '退貨原因',
                         'memo': '備註',
                         'updated_at': '最後異動時間',
-                        'oprate': '操作'
+                        'oprate': '操作',
+                        'orderId': '原訂單內容',
                     },
                     setTrData: {
                         id: 'id',
                         status: 'status'
                     },
                     tdContent: {
+                        'orderId': function(tr, text, trList) {
+                            var detailBtn = $('<button>原訂單內容</button>');
+                            detailBtn.bind('click', function() {
+                                $.ajax({
+                                    url:"/api/admin/goods/order/single/" + text,
+                                    type: "GET",
+                                    dataType: "json",
+                                    contentType: "application/json;charset=utf-8",
+                                    success:function(res){
+                                        if (res.code !== 200) {
+                                            return;
+                                        }
+                                        _this.backOrderData = [res.data];
+                                        _this.setRebackOrderTable();
+
+                                        $("#backOrderListWrap").dialog({
+                                            resizable: false,
+                                            width: 1000,
+                                            height: 350,
+                                            modal: true,
+                                            buttons: {
+                                                "關閉": function() {
+                                                    $(this).dialog("close");
+                                                }
+                                            }
+                                        });
+                                    }}
+                                );
+                            })
+                            
+                            return [detailBtn];
+                        },
                         'oprate': function(tr, text, trList){
                             var rebackStatus = trList.rebackStatus;
 
@@ -423,7 +485,6 @@
                         'totalAmount': '消費金額',
                         'status': '訂單狀態',
                         'memo': '訂單備註'
-                        // 'oprate': '操作'
                     },
                     setTrData: {
                         id: 'id',
@@ -436,17 +497,6 @@
                                 $(tr).addClass('not-has');
                                 return null;
                             }
-
-                            
-                            // // 退貨申請
-                            // var backOrderBtn = status === 'E' ? $('<button>退貨申請</button>') : null;
-                            // if (backOrderBtn) {
-                            //     backOrderBtn.bind('click', function(e) {
-                            //         e.preventDefault();
-                            //         var onlyAllBack = false;
-
-
-                            // return [cancelButton, editButton, backOrderBtn];
                         },
                         'status': function(tr, text) {                                
                             return _this.statusList[text];
@@ -469,39 +519,31 @@
                 }
             );
         },
-        getApplyList: function() {
+        getApplyList: function(paramObj = {}) {
             var _this = this;
+            var formData = new FormData();
+            var paramsUrl = '';
+            if (Object.keys(paramObj).length) {
+                var params = $.param(paramObj);
+                paramsUrl = '?' + params;
+            }
             $.ajax({
-                url:"/api/admin/goods/order/apply/list",
+                url:"/api/admin/goods/order/apply/list" + paramsUrl,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json;charset=utf-8",
                 success:function(res){
-                    if (!res || !res.data || !Object.keys(res.data).length) {
+                    if (res.message) {
+                        alert(res.message)
+                    }
+                    if (!res || !res.data) {
                         return;
                     }
+                    // if (!Object.keys(res.data).length) {
+                    //     alert('查無資料');
+                    // }
                     _this.applyOrderData = res.data;
                     _this.setApplyOrderTable();
-                    // _this.setTable();
-                    // _this.setTabButton();
-                }
-            });
-        },
-        getRebackList: function() {
-            var _this = this;
-            $.ajax({
-                url:"/api/admin/goods/order/back/list",
-                type: "GET",
-                dataType: "json",
-                contentType: "application/json;charset=utf-8",
-                success:function(res){
-                    if (!res || !res.data || !Object.keys(res.data).length) {
-                        return;
-                    }
-                    _this.backOrderData = res.data;
-                    _this.setRebackOrderTable();
-                    // _this.setTable();
-                    // _this.setTabButton();
                 }
             });
         }

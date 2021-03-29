@@ -42,20 +42,34 @@
     .ml-10 {
         margin-left: 10px;
     }
-    .red-tip {
-        font-size: 14px;
-        color: rgb(240, 68, 68);
-    }
+    
     input.disabled {
         background-color: rgb(230 230 230);
         cursor: not-allowed;
     }
+    .level-list-wrap .top-wrap {
+        min-height: 150px;
+        background: #F76F6F; /* Old browsers */
+        background: -moz-linear-gradient(-7deg,  #bfbfbf 0%, #f4f5db 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(-7deg,  #bfbfbf 0%,#f4f5db 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(136deg, #bfbfbf 0%,#f4f5db 100%);/* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        color: #FFF;
+    }
+
+    .level-list-wrap .tip-text {
+        font-size: 17px;
+        line-height: 22px;
+        color: rgb(240, 68, 68);
+    }
 </style>
-<div>
-    <h3 class="title">等級管理及優惠設定</h3>
-    <div id="addLevelSet" class="add-level"></div>
-    <span class="red-tip">等級晉級金額,新增後無法編輯</span>
-    <div class="red-tip">滿額折扣是重複計算的 ex: 滿千送百,則五千送五百</div>
+<div class="level-list-wrap">
+    <div class="top-wrap clearfix">
+        <h3 class="title">等級管理及優惠設定</h3>
+        <div id="addLevelSet" class="add-level"></div>
+        <span class="tip-text">等級晉級金額,新增後無法編輯</span>
+        <div class="tip-text">滿額折扣是重複計算的 ex: 滿千送百,則五千送五百</div>
+    </div>
+
     <table id="levelTable">
         <thead>
             <tr>
@@ -189,7 +203,7 @@
             var mainDom = $('#setLevel')
             var setLevelTemp = $('#setLevel .setting-position');    // 整體模板
             var tempContent = $(setLevelTemp).find('.setting-wrap')[0];     // 模板內容
-            var oprateBtn = $('<button class="gray">' + setting['btnTitle'] + '</button>');     // 操作按鈕
+            var oprateBtn = $('<button class="blue float-right">' + setting['btnTitle'] + '</button>');     // 操作按鈕
             var btnWrap = $('<div class="btn-wrap"></div>');    // 按鈕外框
             var closeBtn = $('<button class="close-btn gray">關閉</button>');    // 作用按鈕（關閉）
             var submitBtn = $('<button id="submit" class="close-btn pink">送出</button>');  // 作用按鈕（送出）

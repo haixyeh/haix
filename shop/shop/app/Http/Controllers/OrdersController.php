@@ -202,6 +202,7 @@ class OrdersController extends Controller
     {
         $account = $request->input('account');
         $name = $request->input('userName');
+        $orderNumber = $request->input('orderNumber');
 
         $data = array(
             'account'=> $account ? $account : '',
@@ -253,6 +254,9 @@ class OrdersController extends Controller
             ->when($name, function($query) use ($name) {
                 return $query->where('name', 'like', '%' . $name . '%');
             })
+            ->when($orderNumber, function($query) use ($orderNumber) {
+                return $query->where('orderNumber', 'like', '%' . $orderNumber . '%');
+            })
             ->having('cancelOrder', 'N')
             ->having('status', 'N')
             ->orHaving('status', 'Y')
@@ -272,7 +276,7 @@ class OrdersController extends Controller
                 array_push($goodscount, $itemInfo->count);
             }
             $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
-            foreach ($goods  as $goodsKey => $goodsItem) {
+            foreach ($goods as $goodsKey => $goodsItem) {
                 $goodsItem['count'] = $goodscount[$goodsKey];
             }
             $item['goods'] = $goods;
@@ -347,6 +351,26 @@ class OrdersController extends Controller
         $this->response['data'] = $list;
         
     
+        return response()->json($this->response);
+    }
+    // 顯示單一訂單
+    function forOne(Request $request, $id) {
+        $order = $this->findOrder((int) $id);
+        $list = $order->first();
+        $goodsIndo = json_decode($list['goodsIndo']);
+        $goodsIds = array();
+        $goodscount = array();
+        foreach ($goodsIndo as $itemKey => $itemInfo) {
+            array_push($goodsIds, $itemInfo->id);
+            array_push($goodscount, $itemInfo->count);
+        }
+        $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
+        foreach ($goods  as $goodsKey => $goodsItem) {
+            $goodsItem['count'] = $goodscount[$goodsKey];
+        }
+        $list['goods'] = $goods;
+
+        $this->response['data'] = $list;
         return response()->json($this->response);
     }
 

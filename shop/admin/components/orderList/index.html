@@ -81,7 +81,16 @@
                 <label for="userName">收件者</label>
                 <input type="text" name="userName" id="userName" placeholder="請輸入收件者">
             </div>
-            <button id="search" class="minsize button green">搜尋</button>
+            <div class="input-wrap">
+                <label for="orderNumber">訂單號</label>
+                <input type="text" id="orderNumber" name="orderNumber" placeholder="請輸入訂單號(可為空)">
+            </div>
+            <!-- <div class="input-wrap">
+                <label for="status">訂單狀態</label>
+                <select id="status" name="status"></select>
+            </div> -->
+            <button class="minsize button pink search-btn" id="orderClear">清除</button>
+            <button id="orderSearch" class="minsize button green">搜尋</button>
         </div>
         <h3 class="title">訂單管理</h3>
     </div>
@@ -111,15 +120,23 @@
                 var _this = this;
                 _this.getOrderList();
                
-                $('#search').on('click', function() {
+                $('#orderSearch').on('click', function() {
                     var obj = {};
-                    $('.search-box-wrap').find('input').each(function(index, item) {
+                    $('.order-list-wrap .search-box-wrap').find('input').each(function(index, item) {
                         var filedName = $(item).attr('name');
                         var filedValue = $(item).val();
                         obj[filedName] = filedValue;
                     })
                     _this.searchObject = obj;
                     _this.getOrderList(obj);
+                });
+                $('#orderClear').on('click', function(){
+                    $('.order-list-wrap .search-box-wrap').find('input, select').each(function(index, ele) {
+                        $(ele).val('');
+                        if ($(this)[0]['nodeName'] === 'SELECT') {
+                            member.changeLevelOption = '';
+                        }
+                    });
                 });
                 _this.setTabButton();
             },
@@ -132,6 +149,13 @@
                 S: '出貨中',
                 E: '完成訂單（已完成）',
                 L: '完成訂單（強制取消再退貨）'
+            },
+            orderStatus: {
+                'E':'訂單已完成',
+                'L': '訂單已完成',
+                'N': '未接受訂單',
+                'Y': '已接受訂單',
+                'S': '出貨中'
             },
             tabBindMethod: function(e) {
                 e.preventDefault();
@@ -183,25 +207,7 @@
             setStatus: function(status, id) {
                 var _this = this;
                 var goodsStatusOptions = $("<td></td>");
-                switch (status) {
-                    case 'E':
-                        goodsStatusOptions.text('訂單已完成');
-                        break;
-                    case 'L':
-                        goodsStatusOptions.text('訂單已完成');
-                        break;
-                    case 'N':
-                        goodsStatusOptions.text('未接受訂單');
-                        break;
-                    case 'Y':
-                        goodsStatusOptions.text('已接受訂單');
-                        break;
-                    case 'S':
-                        goodsStatusOptions.text('出貨中');
-                        break;
-                    default:
-                        break;
-                }
+                goodsStatusOptions.text(_this.orderStatus[status]);
 
                 return goodsStatusOptions;
             },

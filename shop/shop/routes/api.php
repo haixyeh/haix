@@ -63,6 +63,7 @@ Route::group(['middleware' => ['adminauth:api']], function(){
     Route::put('/admin/goods/order/{id}','OrdersController@cancelOrder')->name("hospital"); // 取消訂單
     Route::post('/admin/goods/order/status','OrdersController@orderSatus'); // 訂單處理狀態
     Route::post('/admin/goods/order/memoFix','OrdersController@memoFix'); // 備註狀態處理
+    Route::get('/admin/goods/order/single/{id}','OrdersController@forOne'); // 查看訂單號列表
     // 退貨管理
     Route::get('/admin/goods/order/back/list','OrdersController@showBack'); // 查看訂單號列表
     Route::get('/admin/goods/order/apply/list','RebackController@show'); // 新增等級設定

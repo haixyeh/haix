@@ -195,9 +195,45 @@ class RebackController extends Controller
      * 回傳全部申請資料
      * @return \Illuminate\Http\Response
      */
-    public function show()
+    public function show(Request $request)
     {
-        $list = RebackOrder::orderBy('id', 'desc')->get()->all();
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $orderNumber = $request->input('orderNumber');
+        $rebackStatus = $request->input('rebackStatus');
+
+        $data = array(
+            'orderNumber' => $orderNumber ? $orderNumber : ''
+        );
+
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'orderNumber' => ['max:10']
+        ],[
+            'orderNumber.max' => '退貨訂單號：請勿輸入超過10字元',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            $this->response['code'] = 60021;
+            $this->response['message'] = $error;
+            return response()->json($this->response);
+        }
+
+        $list = RebackOrder::orderBy('id', 'desc')
+        ->when($startDate, function ($query) use ($startDate) {
+            return $query->whereDate('created_at', '>=', $startDate);
+        })
+        ->when($endDate, function ($query) use ($endDate) {
+            return $query->whereDate('created_at', '<=', $endDate);
+        })
+        ->when($orderNumber, function ($query) use ($orderNumber) {
+            return $query->where('orderNumber', 'like', '%' . $orderNumber. '%');
+        })
+        ->when($rebackStatus, function ($query) use ($rebackStatus) {
+            return $query->where('rebackStatus', $rebackStatus);
+        })->get()->all();
+
         $this->response['data'] = $list;
         return response()->json($this->response);
     }

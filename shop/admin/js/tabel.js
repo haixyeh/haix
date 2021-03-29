@@ -20,7 +20,10 @@ var setTable = function(tabelSetting) {
         $(th).text(field[list]);
         $(thTr).append(th);
     });
-
+    if (!tableData.length) {
+        var tdTr = $('<tr><td colspan="100" style="text-align: center;">查無資料</td></tr>');
+        tdTr.appendTo(tBody);
+    }
     tableData.forEach(function(list) {
         var id = list.id ? list.id :  null;
         var props = {
@@ -36,7 +39,7 @@ var setTable = function(tabelSetting) {
         tdTr.appendTo(tBody);
 
         Object.keys(field).forEach(function(listName) {
-            var td = $('<td></td>');
+            var td = $('<td class="list-'+ listName +'"></td>');
 
             if (tdContent[listName]) {
                 var method =tdContent[listName];
