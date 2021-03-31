@@ -6,6 +6,7 @@ use Hash;
 use RedisServer;
 use App\Users;
 use App\UserInfo;
+use App\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -173,6 +174,7 @@ class UsersController extends Controller
             ->when($level, function ($query) use ($level) {
                 return $query->where('level', $level);
             })
+            // ->having('isDel', 'N')
             ->get()
             ->all();
         $usersInfoAry = array();
@@ -449,8 +451,21 @@ class UsersController extends Controller
         $users = Users::where('id',$id);
         $userAccount = $users->first()['name'];
 
+        $order = Order::where('account', $userAccount)
+            ->whereNotIn( 'status', ['E', 'F'])
+            ->having('cancelOrder', 'N');
+
+        if (!empty($order->first())) {
+            $orderNumber = $order->first()->orderNumber;
+
+            $this->response['code'] = 1033;
+            $this->response['message'] = '尚有訂單未處理完成【' . $orderNumber . '】, 請查閱 【訂單管理、退貨管理】';
+            return response()->json($this->response);
+        }
+
         $data = array();
-        if ($users->first() && $users -> delete()) {
+        $apiToken = Str::random(10);
+        if ($users->first() && $users->update(['isDel'=>'Y', 'email'=>null, 'api_token'=>$apiToken])) {
             $this->response['message'] = '刪除成功';
 
             // 詳細資料一併刪除
@@ -458,12 +473,12 @@ class UsersController extends Controller
                 'account' => $userAccount,
             ]);
 
-            if ($usersTable && $usersTable -> delete()) {
+            if ($usersTable && $usersTable->update(['email'=>null])) {
                 return response()->json($this->response);
             }
 
             $this->response['code'] = 200;
-            $this->response['message'] = '刪除成功、詳細資料表未移除（請聯繫客服）';
+            $this->response['message'] = '刪除成功、詳細資料表有問題, 請聯繫客服';
             return response()->json($this->response);
         }
 
@@ -473,7 +488,7 @@ class UsersController extends Controller
     }
 
     // 設定通知用戶信息
-    public function setMessage($userId = null, $msg = null) {
+    public function setMessage($userId = null, $msg = null, $coupon = null) {
         if (empty($msg) || empty($userId)) {
             return false;
         }
@@ -515,6 +530,49 @@ class UsersController extends Controller
 
         return response()->json($this->response);
     }
+
+    // 購物金訊息
+    public function setCoupon($userId = null, $msg = null) {
+        if (empty($msg) || empty($userId)) {
+            return false;
+        }
+        $redis = RedisServer::connection();
+        $userMsg = json_decode($redis->get('user'. $userId . 'coupon'));
+
+        if (empty($userMsg)) {
+            $userMsg = array();
+        }
+
+        array_unshift($userMsg, $msg);
+
+        $over = $redis->set('user'. $userId . 'coupon', json_encode($userMsg));
+
+        if ($over) {
+            return true;
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
+    // get 購物金 Msg
+    public function getCouponMessage(Request $request)
+    {
+        $redis = RedisServer::connection();
+        $users = $this->UserGet($request);
+        $userMsg = json_decode($redis->get('user'. $users->id . 'coupon'));
+
+        if (empty($userMsg)) {
+            return response()->json($this->response);
+        }
+
+        $data = json_decode($redis->get('user'. $users->id . 'coupon'));
+        $this->response['data'] = $data;
+
+        return response()->json($this->response); 
+    }
+
     public function delMsg(Request $request, $id)
     {
         $redis = RedisServer::connection();

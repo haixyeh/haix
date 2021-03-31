@@ -7,6 +7,11 @@ use App\Categories;
 
 class CategoriesController extends Controller
 {
+    private $response;
+    public function __construct()
+    {
+        $this->response = $this->normalOutput();
+    }
     /**
      * 建立商品分類
      * @param request Illuminate\Http\Request

@@ -26,6 +26,7 @@ class CreateGoodsTable extends Migration
             $table->string('images');
             $table->string('forcedRemoval', 1)->default('N');
             $table->string('isDestroy', 1)->default('N');
+            $table->integer('sort')->default(0);
             $table->timestamps();
         });
     }

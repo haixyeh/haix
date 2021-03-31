@@ -16,12 +16,13 @@ class Users extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name')->unique();
-            $table->string('email')->unique();
+            $table->string('email')->nullable()->unique();
             $table->string('password');
             $table->string('api_token')->unique();
             $table->string('level')->default('1');
             $table->integer('cost')->default(0);    // 花費金額
             $table->integer('coupon')->default(0);  // 購物金
+            $table->char('isDel', 1)->default('N');
             $table->timestamps();
         });
     }

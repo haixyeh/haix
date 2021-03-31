@@ -13,12 +13,16 @@ use RedisServer;
 class GoodsController extends Controller
 {
     private $response;
+    private $Categories;
+    private $timeNow;
     /**
      * MenuController constructor.
      */
     public function __construct()
     {
         $this->response = $this->normalOutput();
+        $this->Categories = new CategoriesController();
+        $this->timeNow = date("Y-m-d H:i:s" , mktime(date('H')+8, date('i'), date('s'), date('m'), date('d'), date('Y')));
     }
 
     // 全部商品
@@ -142,6 +146,12 @@ class GoodsController extends Controller
             $carItemID = $carItem->id;
             $carItemCount = $carItem->count;
             $goodsItem = $this->singleData($carItemID);
+
+            
+            if ($goodsItem['forcedRemoval'] === 'Y' || $goodsItem['isDestroy'] === 'Y' || $goodsItem['endDate'] < $this->timeNow) {
+                // var_dump($goodsItem['endDate'] < $this->timeNow);
+                continue;
+            }
             $goodsItem['count'] = (int)$carItemCount;
 
             // 總計
@@ -235,11 +245,13 @@ class GoodsController extends Controller
     function mapCategories(Request $request)
     {
         $data = $this->show($request,false);
-        $categories = new CategoriesController();
+        $categories = $this->Categories;
         $categoriesAll = $categories-> showAllData();
         $newCategoriesList = array();
+
         foreach ($data['start'] as $key => $value) {
             $type = $value['goodsType'];
+            
             if (!array_key_exists($type, $newCategoriesList)) {
                 $newCategoriesList[$type] = array();
             }
@@ -294,13 +306,18 @@ class GoodsController extends Controller
                 ->when($goodsType, function ($query) use ($goodsType) {
                     return $query->where('goodsType', $goodsType);
                 })
-                ->orderBy('startDate')
+                ->when($goodsType, function ($query) use ($goodsType) {
+                    return $query->orderBy('sort');
+                })
+                ->when(empty($goodsType), function ($query) {
+                    return $query->orderBy('startDate');
+                })
                 ->get()
                 ->all();
         }
         if (!$isOrderDate) {
             $list = Goods::having('isDestroy', '=', 'N')
-                ->orderBy('isRecommon', 'desc')
+                ->orderBy('sort')
                 ->get()
                 ->all();
         }
@@ -508,5 +525,18 @@ class GoodsController extends Controller
         $file->move(public_path('images'), $imageName);
 
         return '/images/' . $imageName;
+    }
+
+    // 處理貨品排序
+    public function handleSort(Request $request)
+    {
+        $data = $request->all();
+        $sort = json_decode($data['sort']);
+
+        foreach ($sort as $index => $item) {
+            Goods::where('id', (int) $item)->update(['sort' => $index + 1]);
+        }
+        
+        return response()->json($this->response);
     }
 }

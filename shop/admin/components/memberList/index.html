@@ -95,8 +95,10 @@
                 <th>更新日期</th>
                 <th>等級</th>
                 <th>消費總額</br><span class="red">(完成訂單額度)</span></th>
+                <th>購物金</th>
                 <th>操作</th>
                 <th>用戶資料</th>
+                <th>是否刪除</th>
             </tr>
         </thead>
         <tbody>
@@ -164,7 +166,10 @@
             $('.delete').on('click', function() {
                 var name = $(this).data('name');
                 var id = $(this).data('id');
-                var checkDel = confirm('確定移除' + name + "?");
+                var checkDel = confirm(''+
+                    '＊ 移除前請確[訂單以及退貨 - 是否尚未處理完成]'+
+                    '\n＊ 移除時僅使email刪除以及此帳號無法登入'+
+                    '\n＊ 確定移除' + name + "?");
                 if (checkDel) {
                     $.ajax({
                         url:"/api/admin/destroy/" + id,
@@ -334,15 +339,17 @@
 
                             var listTr = $('<tr class="tr-'+index+'"></tr>');
                             listTr.append("<td>" +item.name +"</td>"+
-                                    "<td>" +item.email +"</td>"+
+                                    "<td>" + (item.email ? item.email : '') +"</td>"+
                                     "<td>" +item.created_at +"</td>"+
                                     "<td>" +item.updated_at +"</td>"+
-                                    '<td class="level-'+ item.id +'">' + levelSelect +"</td>"+
+                                    '<td class="level-'+ item.id +'">' + (item.isDel === "N" ? levelSelect : '已刪除') +"</td>"+
                                     "<td>" +item.cost +"</td>"+
-                                    "<td>" +_this.commonBtn(item.id, item.name)+ "</td>");
+                                    "<td>" +item.coupon +"</td>"+
+                                    "<td>" +(item.isDel === "N" ? _this.commonBtn(item.id, item.name) : '已刪除不可操作')+ "</td>"
+                                    );
                             listTr.append(detailBtnTd);
                             listTr.append(userDetail);
-                            
+                            listTr.append("<td style='text-align: center;'>"+(item.isDel === "Y" ? '<span class="red-tip">√</span>' : '')+"</td>");
 
                             $('#memberTable tbody').append(listTr);
                             $('#memberTable tbody .tr-' + index + ' select[name="level"]').val(item.level).data('level', item.level).data('id', item.id);

@@ -95,7 +95,7 @@ class OrdersController extends Controller
         // 確認購物車是否存在貨物
         if (empty($goodsCar['goodsIndo'])) {
             $this->response['code'] = 5567;
-            $this->response['message'] = '購物車空了';
+            $this->response['message'] = '購物車空了, 請重整頁面（物品已下架或是物品數量不足）';
             return response()->json($this->response);
         }
 
@@ -131,8 +131,9 @@ class OrdersController extends Controller
         
         if ($Create) {
             // 先扣除購物金
-            if ($userCoupon) {
+            if ($userCoupon > 0) {
                 $user->update(['coupon' => $userCoupon - $data['coupon']]);
+                $this->usersMethod->setCoupon($user->first()->id, '<span>'. $this->timeNow .'</span> - ' . '購買【'. $orderNumber .'】, 扣除購物金' . $data['coupon']);
             }
             $this->response['message'] = '建立成功, 您的訂單編號:' . $orderNumber ;
             $this->usersMethod->setMessage($user->first()->id, '已於[<span>'. $this->timeNow .'</span>] 訂購貨品,' . '訂單編號【' . $orderNumber . '】【貨到付款】');

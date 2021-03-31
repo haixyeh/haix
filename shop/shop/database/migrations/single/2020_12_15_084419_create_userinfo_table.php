@@ -20,7 +20,7 @@ class CreateUserinfoTable extends Migration
             $table->char('lastName')->nullable();
             $table->string('address')->nullable();
             $table->string('phone')->nullable();
-            $table->string('email')->unique();
+            $table->string('email')->nullable()->unique();
             $table->timestamps();
         });
     }

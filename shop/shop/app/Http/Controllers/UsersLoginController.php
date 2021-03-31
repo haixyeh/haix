@@ -36,7 +36,7 @@ class UsersLoginController extends Controller
                 $queryStatus = true;
                 $users = Users::where([
                     'name' => $data['account'],
-                    ]);
+                    ])->having('isDel', 'N');
             } catch (\Throwable $th) {
                 $queryStatus = false;
             }
@@ -47,7 +47,7 @@ class UsersLoginController extends Controller
                 $queryStatus = true;
                 $users = Users::where([
                     'email' => $data['email']
-                    ]);
+                    ])->having('isDel', 'N');
             } catch (\Throwable $th) {
                 $queryStatus = false;
             }

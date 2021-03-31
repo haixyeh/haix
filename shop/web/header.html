@@ -16,6 +16,12 @@
             <div id="userMsgDialog" style="display: none;">
                 <div class="content"></div>
             </div>
+            <button id="couponMsg" class="button pink" style="display: none;">
+                購物金歷程
+            </button>
+            <div id="couponMsgDialog" style="display: none;">
+                <div class="content"></div>
+            </div>
             <button id="levelMem" class="button blue float-right" style="display: none;margin-right: 10px;">
                 會員等級
             </button>
@@ -75,6 +81,10 @@
                         // 允許查看會員等級
                         $('#levelMem').show();
 
+                        if (res.data.coupon) {
+                            $('#couponMsg').show();
+                        }
+
                         if (res.data.isSeeMsg === 'N') {
                             $('#userMsg').addClass('has-new');
                         }
@@ -95,7 +105,7 @@
                                         del.bind('click', function(e) {
                                             e.preventDefault();
                                             $.ajax({
-                                                url:"/api/haix/message/" + index,
+                                                url:"/api/haix/getCouponMessage/" + index,
                                                 type: "PUT",
                                                 success:function(res){
                                                     $('#userMsg').click();
@@ -118,14 +128,43 @@
                                 buttons: {
                                     "關閉": function() {
                                         $(this).dialog("close");
-                                    },
-                                    // Cancel: function() {
-                                    //     $(this).dialog("close");
-                                    // }
+                                    }
                                 }
                             });
                         });
                         
+                        // 購物金歷程
+                        $('#couponMsg').bind('click', function() {
+                            $.ajax({
+                                url:"/api/haix/getCouponMessage",
+                                type: "GET",
+                                success:function(res){
+                                    $('#couponMsgDialog .content').html('');
+                                    // 訊息內容設定
+                                    var content = $('<div></div>');
+                                    res.data.forEach(function(item, index) {
+                                        var newDiv = $('<div class="news-item clearfix"></div>');
+                                        newDiv.append(item);
+                                        content.append(newDiv);
+                                    });
+                                    $(content).appendTo($('#couponMsgDialog .content'));
+
+                                    $('#couponMsg').removeClass('has-new');
+                                }
+                            });
+                            $("#couponMsgDialog").dialog({
+                                resizable: false,
+                                width: 500,
+                                height: 500,
+                                modal: true,
+                                buttons: {
+                                    "關閉": function() {
+                                        $(this).dialog("close");
+                                    }
+                                }
+                            });
+                        });
+
                         $('#unLoginShow').hide();
                         $('#welcome').html('<div class="welcome">歡迎光臨<span>' + res.data.user +'</span></div>');
                         if (res.data.coupon) {

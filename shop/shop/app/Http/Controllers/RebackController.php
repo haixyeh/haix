@@ -469,7 +469,9 @@ class RebackController extends Controller
                 $order->update(['status'=> 'F']);
             }
             // 退貨成功訊息
-            $this->usersMethod->setMessage($user->id, '<span>'. $this->timeNow .'</span> - ' . '退貨成功, 購物金' . $nowCoupon . '已入帳');
+            $this->usersMethod->setMessage($user->id, '<span>'. $this->timeNow .'</span> - ' . '退貨成功, 購物金' . $nowCoupon . '已入帳', $nowCoupon);
+            $this->usersMethod->setCoupon($user->id, '<span>'. $this->timeNow .'</span> - ' . '退貨【'. $order->orderNumber .'】, 購物金' . $nowCoupon . '已入帳');
+        
             // 層級調整
             $this->levelChange($cost, $order, $user);
         }

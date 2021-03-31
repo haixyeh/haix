@@ -66,9 +66,10 @@
             <button class="minsize button green search-btn" id="goodsSearch">搜尋</button>
         </div>
         <h3 class="title">商品列表</h3>
+        <span class="tip-text">＃ 選擇完商品分類, 上架中商品可調整產品順序</span>
     </div>
     <div id="btnWrap"></div>
-    <table id="goodsTable">
+    <table id="goodsTable" class="sortable">
         <thead>
             <tr>
                 <th data-field="index">編碼</th>
@@ -84,6 +85,11 @@
             </tr>
         </thead>
         <tbody></tbody>
+        <tfoot id="goodsFoter" style="display: none;">
+            <tr>
+                <td colspan="100" style="text-align: center;background-color: #EEE;">拖曳結尾線</td>
+            </tr>
+        </tfoot>
     </table>
 </div>
 <script>
@@ -107,6 +113,7 @@
             over: '已下架'
         },
         categories: {},
+        optionCategories: '',
         categoriesList: function() {
             var _this = this;
             $.ajax({
@@ -326,10 +333,62 @@
                             break;
                     }
                 });
-                trContent.push('<tr>'+ tdContent +'</tr>');
+                trContent.push('<tr class="tr" id="'+ item.id +'">'+ tdContent +'</tr>');
             });
             $('#goodsTable').find('tbody').html(trContent);
+            
             _this.mainBtn();
+
+            if (_this.optionCategories && _this.tabCurrent === 'start') {
+                _this.dragmenufunction();
+                $(goodsFoter).show();
+            } else {
+                _this.stopSort();
+                $(goodsFoter).hide();
+            }
+        },
+        // 停止拖曳選單
+        stopSort: function() {
+            var _this = this;
+            if (!_this.startSort) {
+                return;
+            }
+            $(".sortable").sortable("destroy");
+            _this.startSort = false;
+        },
+        //拖曳選單
+        dragmenufunction: function() { 
+            var _this = this;
+            _this.startSort = true;
+            $(".sortable").sortable({
+                cursor: "move",
+                items :".tr",  //指定拖曳元件或ID及CLASS
+                opacity: 0.6, //拖動時，透明度為0.6
+                revert: false, //釋放時，增加動畫
+                update : function(event, ui){ //更新排序之後
+                    var toArray = $(this).sortable("toArray"); //更新拖曳後排序取id值
+                    // console.log(toArray);
+                    var postData = {
+                        goodsType: _this.optionCategories,
+                        sort: JSON.stringify(toArray)
+                    };
+
+                    //AJAX開始
+                    $.ajax({
+                        url:'/api/admin/goods/sort',
+                        type: "POST",
+                        data: JSON.stringify(postData),
+                        dataType: "json",
+                        contentType: "application/json;charset=utf-8",
+                        success: function(response) {
+                            alert("已更動按鈕排序");
+                        },
+                        error: function() {
+                            console.log('ajax error!');
+                        }
+                    })
+                }
+            });
         },
         goodsList: function(paramObj = {}) {
             var _this = this;
@@ -338,6 +397,11 @@
             if (Object.keys(paramObj).length) {
                 var params = $.param(paramObj);
                 paramsUrl = '?' + params;
+            }
+            if (paramObj.goodsType) {
+                _this.optionCategories = paramObj.goodsType;
+            } else {
+                _this.optionCategories = '';
             }
             $.ajax({
                 url:"/api/admin/goods/list" + paramsUrl,
