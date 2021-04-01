@@ -2,8 +2,8 @@
 
 use Illuminate\Http\Request;
 
-Route::middleware('captchauth')->post('/haix', 'UsersController@store');    // 註冊
-Route::get('/haix/flat', 'CaptchasController@store');   // 驗證碼
+Route::middleware('captchauth')->post('/haix', 'UsersController@store'); // 註冊
+Route::get('/haix/flat', 'CaptchasController@store'); // 驗證碼
 Route::get('/haix/userInit', 'UsersLoginController@UserInit'); // 初始資料
 Route::middleware('captchauth')->post('/haix/login','UsersLoginController@UsersLogin'); // 登入
 Route::get('/haix/goods/list','GoodsController@mapCategories'); // 商品列表
@@ -30,7 +30,6 @@ Route::group(['middleware' => ['haixauth:api']], function(){
     Route::get('/haix/getMessage', 'UsersController@getMessage'); // 獲得訊息
     Route::put('/haix/message/{id}', 'UsersController@delMsg'); // 刪除訊息
     Route::get('/haix/getCouponMessage', 'UsersController@getCouponMessage'); // 獲得購物金歷程
-    // Route::get('/haix/userInfo/add', 'UserInfoController@create');  // 會員註冊
 });
 
 // 後台用戶登入

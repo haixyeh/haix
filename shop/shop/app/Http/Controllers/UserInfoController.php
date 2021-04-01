@@ -219,7 +219,7 @@ class UserInfoController extends Controller
         }
         $content = '電話：' . $data['phone'] . '<br> 信箱：' . $data['email'] . ', <br> 留言內容:'. $data['message'];
         $this->emailEvent->send($this->adminEmail, '【用戶留言】' . $data['name'], $content, $data['name']);
-        $this->response['message'] = '修改成功';
+        $this->response['message'] = '已成功送出';
 
         return response()->json($this->response);
     }

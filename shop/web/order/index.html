@@ -122,6 +122,13 @@
     .order-list-table .td-memo span {
         color: #7D9A9E;
     }
+    .status-S {
+        color: #E25B5B;
+    }
+    .status-F,
+    .status-E {
+        color: #46B16D;
+    }
 </style>
 <body style="display: none;">
     <div id="header"></div>
@@ -154,7 +161,7 @@
                 statusList: {
                     'N': '待商家確認訂單',
                     'Y': '已確認訂單',
-                    'S': '出貨中',
+                    'S': '出貨中🚗',
                     'E': '訂單已完成',
                     'R': '退貨申請中',
                     'T': '待確認退貨商品',
@@ -591,10 +598,10 @@
                                         })
                                     }
 
-                                    return [cancelButton, viewButton, editButton, backOrderBtn, backGoodsButton];;
+                                    return [cancelButton, viewButton, editButton, backOrderBtn, backGoodsButton];
                                 },
                                 'status': function(tr, text) {                                
-                                    return _this.statusList[text];
+                                    return '<div class="status-'+ text +'">' + _this.statusList[text] + '</div>';
                                 },
                                 'memo': function(tr, text) {
                                     if (!text) {

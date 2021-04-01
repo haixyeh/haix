@@ -532,11 +532,15 @@ class UsersController extends Controller
     }
 
     // 購物金訊息
-    public function setCoupon($userId = null, $msg = null) {
+    public function setCoupon($userId = null, $msg = null, $isClear = false) {
         if (empty($msg) || empty($userId)) {
             return false;
         }
         $redis = RedisServer::connection();
+        if ($isClear) {
+            $redis->set('user'. $userId . 'coupon', json_encode(''));
+            return false;
+        }
         $userMsg = json_decode($redis->get('user'. $userId . 'coupon'));
 
         if (empty($userMsg)) {

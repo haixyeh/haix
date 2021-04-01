@@ -146,6 +146,7 @@
 
                 // 送出修改
                 $("#submit").click(function(){
+                    $("#loadingOn").show();
                     var inputFiled = $('.info-wrap-user').find('.input-wrap input, .input-wrap textarea');
                     var dataEdit = {};
                     $.each(inputFiled, function(item) {
@@ -159,6 +160,7 @@
                         dataType: "json",
                         contentType: "application/json;charset=utf-8",
                         success:function(result){
+                            $("#loadingOn").hide();
                             alert(result.message || 'error');
                             if (result.code === 200) {
                                 window.location = '/web';

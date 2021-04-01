@@ -16,9 +16,6 @@
             <div id="userMsgDialog" style="display: none;">
                 <div class="content"></div>
             </div>
-            <button id="couponMsg" class="button pink" style="display: none;">
-                購物金歷程
-            </button>
             <div id="couponMsgDialog" style="display: none;">
                 <div class="content"></div>
             </div>
@@ -81,10 +78,6 @@
                         // 允許查看會員等級
                         $('#levelMem').show();
 
-                        if (res.data.coupon) {
-                            $('#couponMsg').show();
-                        }
-
                         if (res.data.isSeeMsg === 'N') {
                             $('#userMsg').addClass('has-new');
                         }
@@ -132,43 +125,46 @@
                                 }
                             });
                         });
-                        
-                        // 購物金歷程
-                        $('#couponMsg').bind('click', function() {
-                            $.ajax({
-                                url:"/api/haix/getCouponMessage",
-                                type: "GET",
-                                success:function(res){
-                                    $('#couponMsgDialog .content').html('');
-                                    // 訊息內容設定
-                                    var content = $('<div></div>');
-                                    res.data.forEach(function(item, index) {
-                                        var newDiv = $('<div class="news-item clearfix"></div>');
-                                        newDiv.append(item);
-                                        content.append(newDiv);
-                                    });
-                                    $(content).appendTo($('#couponMsgDialog .content'));
-
-                                    $('#couponMsg').removeClass('has-new');
-                                }
-                            });
-                            $("#couponMsgDialog").dialog({
-                                resizable: false,
-                                width: 500,
-                                height: 500,
-                                modal: true,
-                                buttons: {
-                                    "關閉": function() {
-                                        $(this).dialog("close");
-                                    }
-                                }
-                            });
-                        });
 
                         $('#unLoginShow').hide();
                         $('#welcome').html('<div class="welcome">歡迎光臨<span>' + res.data.user +'</span></div>');
                         if (res.data.coupon) {
-                            $('#coupon').html('<div class="coupon">購物金<span>$' + res.data.coupon +'</span></div>');
+                            $('#coupon').html('<div class="coupon">購物金<span>$' + res.data.coupon +'</span>'+
+                                '<button id="couponMsg" class="coupon-msg-btn">+</button>' +
+                            '</div>')
+
+                            // 購物金歷程
+                            $('#couponMsg').bind('click', function() {
+                                $.ajax({
+                                    url:"/api/haix/getCouponMessage",
+                                    type: "GET",
+                                    success:function(res){
+                                        $('#couponMsgDialog .content').html('');
+                                        // 訊息內容設定
+                                        var content = $('<div></div>');
+                                        content.append('<div class="tip-title"># # # # 若購物金用盡, 則移除購物金歷程 # # # #</div>');
+                                        res.data.forEach(function(item, index) {
+                                            var newDiv = $('<div class="news-item clearfix"></div>');
+                                            newDiv.append(item);
+                                            content.append(newDiv);
+                                        });
+                                        $(content).appendTo($('#couponMsgDialog .content'));
+
+                                        $('#couponMsg').removeClass('has-new');
+                                    }
+                                });
+                                $("#couponMsgDialog").dialog({
+                                    resizable: false,
+                                    width: 500,
+                                    height: 500,
+                                    modal: true,
+                                    buttons: {
+                                        "關閉": function() {
+                                            $(this).dialog("close");
+                                        }
+                                    }
+                                });
+                            });
                         }
                     } else {
                         $('#isLogin').hide();

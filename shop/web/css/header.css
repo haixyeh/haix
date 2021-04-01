@@ -129,6 +129,20 @@ body {
     color: #FFF;
     border-color: #000;
 }
+
+.tip-title {
+    margin-bottom: 10px;
+    color: #607D8B;
+    font-size: 15px;
+    text-align: center;
+}
+
+/* 購物金 */
+.coupon-msg-btn {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
 @keyframes stripe-slide {
     0% { background-position: 0% 0; }
     100% { background-position: 100% 0; }

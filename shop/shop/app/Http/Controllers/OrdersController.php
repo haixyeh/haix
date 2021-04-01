@@ -131,9 +131,12 @@ class OrdersController extends Controller
         
         if ($Create) {
             // 先扣除購物金
-            if ($userCoupon > 0) {
+            if ((int) $data['coupon'] > 0) {
                 $user->update(['coupon' => $userCoupon - $data['coupon']]);
                 $this->usersMethod->setCoupon($user->first()->id, '<span>'. $this->timeNow .'</span> - ' . '購買【'. $orderNumber .'】, 扣除購物金' . $data['coupon']);
+            }
+            if ($user->first()->coupon === 0) {
+                $this->usersMethod->setCoupon($user->first()->id, 'clear', true);
             }
             $this->response['message'] = '建立成功, 您的訂單編號:' . $orderNumber ;
             $this->usersMethod->setMessage($user->first()->id, '已於[<span>'. $this->timeNow .'</span>] 訂購貨品,' . '訂單編號【' . $orderNumber . '】【貨到付款】');
@@ -193,11 +196,13 @@ class OrdersController extends Controller
         }
         return $generateorderNumber;
     }
+
     // 後台退貨訂單資料
     public function showBack(Request $request, $back = false)
     {
         return $this->show($request, true);
     }
+
     // 後台顯示客戶訂單資料
     public function show(Request $request, $back = false)
     {
@@ -399,6 +404,18 @@ class OrdersController extends Controller
 
         $order = $this->findOrder($data['id']);
         $orderStatus = $order->first()->status;
+        
+        // $goodsIndo = $order->first()->goodsIndo;
+        // $goodsIds = array();
+        // $goodscount = array();
+        // foreach ($goodsIndo as $itemKey => $itemInfo) {
+        //     array_push($goodsIds, $itemInfo->id);
+        //     array_push($goodscount, $itemInfo->count);
+        // }
+        // $goods = Goods::whereIn('id', $goodsIds)->select('id', 'name', 'total')->get();
+        // foreach ($goods  as $goodsKey => $goodsItem) {
+        //     $goodsItem['count'] = $goodscount[$goodsKey];
+        // }
 
         try {
             $order->update(['status' => $data['status']]);
@@ -535,6 +552,7 @@ class OrdersController extends Controller
                 $rebackCouponMsg = ', 購物金退還' . $order->first()->coupon;
             }
             $this->usersMethod->setMessage($user->first()->id, '<span>'. $this->timeNow .'</span> - 取消訂單, ' . '訂單編號【' . $order->first()->orderNumber . '】'. $rebackCouponMsg);
+            $this->usersMethod->setCoupon($user->first()->id, '<span>'. $this->timeNow .'</span> - 取消【' . $order->first()->orderNumber . '】'. $rebackCouponMsg);
         }
 
         if (!$queryStatus) {

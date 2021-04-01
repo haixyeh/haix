@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Goods;
+use App\Order;
 use App\Http\Controllers\UserInfoController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\CategoriesController;
@@ -141,15 +142,15 @@ class GoodsController extends Controller
         }
 
         $carListData = json_decode(json_encode($carListData));
+        $now = date("Y-m-d");
 
         foreach($carListData as $key => $carItem) {
             $carItemID = $carItem->id;
             $carItemCount = $carItem->count;
             $goodsItem = $this->singleData($carItemID);
 
-            
-            if ($goodsItem['forcedRemoval'] === 'Y' || $goodsItem['isDestroy'] === 'Y' || $goodsItem['endDate'] < $this->timeNow) {
-                // var_dump($goodsItem['endDate'] < $this->timeNow);
+            // 若是被下架或是下架時間不符合都不存在購物內
+            if ($goodsItem['forcedRemoval'] === 'Y' || $goodsItem['isDestroy'] === 'Y' || strtotime($now) > strtotime($goodsItem['endDate'])) {
                 continue;
             }
             $goodsItem['count'] = (int)$carItemCount;
@@ -316,7 +317,9 @@ class GoodsController extends Controller
                 ->all();
         }
         if (!$isOrderDate) {
+            $now = date("Y-m-d");
             $list = Goods::having('isDestroy', '=', 'N')
+                ->whereDate('endDate', '>=', $now)
                 ->orderBy('sort')
                 ->get()
                 ->all();
@@ -506,9 +509,9 @@ class GoodsController extends Controller
                 'isDestroy'=> 'Y'
             ]);
         } catch (\Throwable $th) {
-            //throw $th;
             $queryStatus = false;
         }
+
         if ($queryStatus) {
             $this->response['message'] = '刪除成功';
             return response()->json($this->response);
@@ -536,7 +539,7 @@ class GoodsController extends Controller
         foreach ($sort as $index => $item) {
             Goods::where('id', (int) $item)->update(['sort' => $index + 1]);
         }
-        
+
         return response()->json($this->response);
     }
 }
